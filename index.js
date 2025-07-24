@@ -29,7 +29,9 @@ app.use(session({
     resave: false,
     saveUninitialized: false,
     cookie: {
-        secure: process.env.NODE_ENV === 'production', // Set to true in production
+        // FIX: Use the new environment variable.
+        // It defaults to true if NODE_ENV is production and the variable isn't set.
+        secure: process.env.COOKIE_SECURE === 'true' || (process.env.NODE_ENV === 'production' && process.env.COOKIE_SECURE !== 'false'),
         httpOnly: true,
         maxAge: 1000 * 60 * 60 * 24 // 1 day
     }
@@ -53,10 +55,8 @@ app.use('/account', accountRoutes);
 app.use('/dashboard', dashboardRoutes);
 
 
-// FIX: Root route now always renders the home page.
+// Root route now always renders the home page.
 app.get('/', (req, res) => {
-    // The user object is passed to all templates via middleware,
-    // so the home page can adapt its content if the user is logged in.
     res.render('home');
 });
 
