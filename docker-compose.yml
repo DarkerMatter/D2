@@ -24,7 +24,7 @@ services:
       - ./data/certbot/www:/var/www/certbot
       - ./data/certbot/conf:/etc/letsencrypt
     networks:
-      - d2-network
+      - app-network
     depends_on:
       - app
 
@@ -38,7 +38,7 @@ services:
 
 networks:
   # This network is for communication between our app and nginx
-  d2-network:
+  app-network:
     driver: bridge
   # FIX: Define the external network so our app can connect to it
   mysql_network:
