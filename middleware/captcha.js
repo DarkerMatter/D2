@@ -1,5 +1,6 @@
 // middleware/captcha.js
-const fetch = require('node-fetch'); // Or use native fetch if your Node version supports it
+
+// FIX: Removed `require('node-fetch')` as we will use the globally available fetch API.
 
 async function verifyCaptcha(req, res, next) {
     const token = req.body['cf-turnstile-response'];
@@ -7,7 +8,7 @@ async function verifyCaptcha(req, res, next) {
 
     if (!token) {
         req.flash('error', 'CAPTCHA validation failed. Please try again.');
-        // Redirect back to the form page. You might need to adjust this.
+        // Redirect back to the form page.
         return res.redirect(req.originalUrl.includes('login') ? '/login' : '/register');
     }
 
