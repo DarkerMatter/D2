@@ -704,3 +704,21 @@ body.loading .container {
     /* Slide the delete button into view */
     right: 0;
 }
+
+#session-title {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    flex-wrap: wrap; /* Allows wrapping on small screens */
+}
+
+#session-name-display {
+    font-weight: 600;
+}
+
+#session-date-display {
+    font-size: 0.6em; /* Smaller text */
+    font-weight: 400;
+    color: #a0a0a0; /* Lighter color */
+    opacity: 0.8;
+}

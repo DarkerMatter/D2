@@ -1,0 +1,24 @@
+extends layout
+
+block content
+    .form-container.auth-form
+        h2 Register
+        p Create an account to start tracking your rage.
+        form(action="/register", method="POST")
+            .form-group
+                label(for="username") Username
+                input(type="text", id="username", name="username", required)
+            .form-group
+                label(for="email") Email
+                input(type="email", id="email", name="email", required)
+            .form-group
+                label(for="password") Password
+                input(type="password", id="password", name="password", required, minlength="8")
+                small Password must be at least 8 characters.
+
+            //- Cloudflare Turnstile Widget
+            .cf-turnstile(data-sitekey=siteKey, data-action="register")
+
+            button.btn-primary(type="submit") Register
+        .auth-switch
+            p Already have an account? #[a(href="/login") Log In]

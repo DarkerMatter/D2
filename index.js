@@ -14,6 +14,10 @@ const dashboardRoutes = require('./routes/dashboard');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// --- FIX: Trust the Nginx reverse proxy ---
+// This allows Express to correctly handle secure cookies and identify the client's IP.
+app.set('trust proxy', 1);
+
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -29,8 +33,7 @@ app.use(session({
     resave: false,
     saveUninitialized: false,
     cookie: {
-        // FIX: Use the new environment variable.
-        // It defaults to true if NODE_ENV is production and the variable isn't set.
+        // This will now work correctly because of 'trust proxy'
         secure: process.env.COOKIE_SECURE === 'true' || (process.env.NODE_ENV === 'production' && process.env.COOKIE_SECURE !== 'false'),
         httpOnly: true,
         maxAge: 1000 * 60 * 60 * 24 // 1 day

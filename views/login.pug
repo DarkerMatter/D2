@@ -1,10 +1,8 @@
 extends layout
 
 block content
-    .form-container
+    .form-container.auth-form
         h2 Login
-        if error
-            p.error= error
         form(action="/login", method="POST")
             .form-group
                 label(for="username") Username
@@ -12,4 +10,10 @@ block content
             .form-group
                 label(for="password") Password
                 input(type="password", id="password", name="password", required)
-            button(type="submit") Login
+
+            //- Cloudflare Turnstile Widget
+            .cf-turnstile(data-sitekey=siteKey, data-action="login")
+
+            button.btn-primary(type="submit") Login
+        .auth-switch
+            p Don't have an account? #[a(href="/register") Register]
