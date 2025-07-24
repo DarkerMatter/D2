@@ -1,0 +1,54 @@
+extends layout
+
+block content
+    .admin-container
+        h2 Admin Panel - User Management
+
+        if error
+            p.error= error
+        if success
+            p.success= success
+
+        .user-creation-form
+            h3 Create New User
+            form(action="/admin/create-user", method="POST")
+                input(type="text", name="username", placeholder="Username", required)
+                input(type="password", name="password", placeholder="Password", required)
+                select(name="permission_level", required)
+                    option(value="1") User (Level 1)
+                    option(value="5") Admin (Level 5)
+                    //- Add Banned option
+                    option(value="0") Banned (Level 0)
+                button(type="submit") Create User
+
+        h3 Existing Users
+        table.user-table
+            thead
+                tr
+                    th ID
+                    th Username
+                    th Permission
+                    th Total Rage
+                    th Actions
+            tbody
+                each u in users
+                    tr
+                        td= u.id
+                        td= u.username
+                        td= u.permission_level
+                        td= u.total_rage
+                        td
+                            if u.id !== user.id
+                                //-- START of updated block --//
+                                .action-forms
+                                    form.edit-user-form(action=`/admin/edit-user/${u.id}`, method="POST")
+                                        select(name="permission_level")
+                                            option(value="5", selected=u.permission_level === 5) Admin
+                                            option(value="1", selected=u.permission_level === 1) User
+                                            option(value="0", selected=u.permission_level === 0) Banned
+                                        button(type="submit") Update
+                                    form(action=`/admin/delete-user/${u.id}`, method="POST", onsubmit="return confirm('Are you sure you want to delete this user?');")
+                                        button.delete-btn(type="submit") Delete
+                                //-- END of updated block --//
+                            else
+                                | (You)

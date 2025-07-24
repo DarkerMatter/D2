@@ -1,0 +1,87 @@
+doctype html
+html(lang="en")
+  head
+    meta(charset="UTF-8")
+    meta(name="viewport", content="width=device-width, initial-scale=1.0")
+    //- Add Google Fonts
+    link(rel="preconnect", href="https://fonts.googleapis.com")
+    link(rel="preconnect", href="https://fonts.gstatic.com", crossorigin)
+    link(href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap", rel="stylesheet")
+
+    //- Updated Title
+    title FTS.GG | D2 Rage Counter
+    link(rel="icon", type="image/png", href="/images/logo.png")
+
+    link(rel="stylesheet", href="/css/style.css")
+  //- Add .loading class to body to hide content initially
+  body.loading
+    //- Loader Animation HTML
+    .loader-wrapper
+      .loader
+
+    .container
+      nav
+        //- Updated Header Title
+        h1
+          a(href="/") D2 Rage Counter
+        ul
+          if user
+            li
+              a(href="/dashboard") Dashboard
+            li
+              a(href="/account") Account
+            li
+              a(href="https://fts.gg/discord", target="_blank", rel="noopener noreferrer") Discord
+            if user.permission_level === 5
+              li
+                a(href="/admin") Admin Panel
+            li
+              a(href="/logout") Logout (#{user.username})
+          else
+            li
+              a(href="/login") Login
+      main
+        block content
+      footer
+        //- Updated Footer with Links
+        .footer-links
+          a(href="https://fts.gg/discord", target="_blank", rel="noopener noreferrer") Discord
+          span.separator |
+          a(href="https://github.com/darkermatter", target="_blank", rel="noopener noreferrer") GitHub
+        p &copy; 2025 FTSGG LLC
+
+    //- Chart.js library from CDN
+    script(src="https://cdn.jsdelivr.net/npm/chart.js")
+
+    //- Client-side scripts for UI interactions
+    script.
+      // Initial page load animation
+      window.addEventListener('load', () => {
+        const loader = document.querySelector('.loader-wrapper');
+        if (loader) {
+          loader.classList.add('fade-out');
+          document.body.classList.remove('loading');
+        }
+      });
+
+      // Re-activate loader on specific page navigations
+      document.addEventListener('DOMContentLoaded', () => {
+        const loader = document.querySelector('.loader-wrapper');
+        const body = document.body;
+
+        const loadingLinks = document.querySelectorAll('a[href="/dashboard"], a[href="/account"], a[href="/admin"]');
+
+        loadingLinks.forEach(link => {
+          link.addEventListener('click', (e) => {
+            // Don't trigger for new tabs (Ctrl/Cmd+click) or middle-mouse clicks
+            if (e.ctrlKey || e.metaKey || e.which === 2) {
+              return;
+            }
+
+            if (loader) {
+              body.classList.add('loading');
+              loader.classList.remove('fade-out');
+            }
+          });
+        });
+      });

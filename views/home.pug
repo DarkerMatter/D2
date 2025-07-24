@@ -1,0 +1,12 @@
+extends layout
+
+block content
+    .home-container
+        .hero-section
+            h2 Welcome to the Destiny 2 Rage Counter
+            p.subtitle Track your most tilting moments in Destiny 2. Log your deaths, rate your rage, and see your stats climb over time.
+            .cta-buttons
+                if user
+                    a.btn.btn-primary(href="/dashboard") Go to Your Dashboard
+                else
+                    a.btn.btn-primary(href="/login") Login to Get Started

@@ -1,0 +1,123 @@
+extends layout
+
+block content
+    .admin-container
+        h2 Account Overview
+
+        //- Overall Stats Grid
+        .stats-grid
+            .stat-card
+                h3 Overall Rage
+                p.rage-score= overallStats.totalRage.toLocaleString()
+            .stat-card
+                h3 Overall Deaths
+                p.rage-score= overallStats.totalDeaths.toLocaleString()
+            .stat-card
+                h3 Overall Avg. Rage
+                p.rage-score= overallStats.averageRage
+            .stat-card
+                h3 All-Time Go-To Phrase
+                p.stat-value= overallStats.mostCommonPhrase
+
+        //- NEW: Container for the chart
+        .form-container
+            h3 Rage Phrase Ussage
+            div
+                canvas#ragePhraseChart
+
+        //- Flash Messages
+        if error && error.length > 0
+            .error= error
+        if success && success.length > 0
+            .success= success
+
+        //- Change Password Form
+        .form-container
+            h3 Change Your Password
+            form(action="/account/change-password", method="POST")
+                //- ... (form content is unchanged)
+                .form-group
+                    label(for="currentPassword") Current Password
+                    input(type="password", id="currentPassword", name="currentPassword", required)
+                .form-group
+                    label(for="newPassword") New Password
+                    input(type="password", id="newPassword", name="newPassword", required, minlength="8")
+                button(type="submit") Update Password
+
+        //- Danger Zone
+        .danger-zone
+            h3 Danger Zone
+            p This action is permanent and cannot be undone. This will delete all of your logged rage events, sessions, and reset your overall stats to zero.
+            form(action="/account/delete-history", method="POST", onsubmit="return confirm('Are you absolutely sure you want to delete all of your rage history? This cannot be undone.');")
+                button.delete-btn(type="submit") Delete My Entire History
+
+    //- NEW: Client-side script to render the chart
+    script.
+        document.addEventListener('DOMContentLoaded', async () => {
+            const ctx = document.getElementById('ragePhraseChart');
+            if (!ctx) return;
+
+            try {
+                // Fetch the data from our new API endpoint
+                const response = await fetch('/account/chart-data');
+                if (!response.ok) throw new Error('Failed to fetch chart data');
+                const { labels, data } = await response.json();
+
+                // If there's no data, don't render the chart
+                if (data.length === 0) {
+                    ctx.parentElement.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">No rage phrases logged yet. Go die some more!</p>';
+                    return;
+                }
+
+                new Chart(ctx, {
+                    type: 'bar', // We'll use a bar chart
+                    data: {
+                        labels: labels, // e.g., ["I hate this game.", "This game is shit."]
+                        datasets: [{
+                            label: 'Times Used',
+                            data: data, // e.g., [42, 27]
+                            backgroundColor: 'rgba(245, 166, 35, 0.6)', // --accent-orange with transparency
+                            borderColor: 'rgba(245, 166, 35, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y', // Makes the bar chart horizontal, better for long labels
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false // Hide the legend as it's redundant
+                            },
+                            tooltip: {
+                                titleFont: { size: 14 },
+                                bodyFont: { size: 12 },
+                            }
+                        },
+                        scales: {
+                            x: { // The horizontal axis (our counts)
+                                beginAtZero: true,
+                                ticks: {
+                                    color: 'rgba(234, 234, 234, 0.7)', // --text-color
+                                    precision: 0 // Ensure whole numbers
+                                },
+                                grid: {
+                                    color: 'rgba(51, 51, 51, 0.5)' // --border-color
+                                }
+                            },
+                            y: { // The vertical axis (our phrases)
+                                ticks: {
+                                    color: 'rgba(234, 234, 234, 0.7)' // --text-color
+                                },
+                                grid: {
+                                    display: false // Hide vertical grid lines for a cleaner look
+                                }
+                            }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Chart rendering error:', error);
+                ctx.parentElement.innerHTML = '<p style="text-align: center; color: var(--error-border);">Could not load chart data.</p>';
+            }
+        });

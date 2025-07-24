@@ -1,0 +1,706 @@
+/* public/css/style.css */
+
+/* 1. Define Color Palette and Base Styles */
+:root {
+    --bg-color: #000000;
+    --container-bg: #111111;
+    --border-color: #333333;
+    --text-color: #eaeaea;
+    --text-secondary: #888888;
+    --accent-color: #0070f3;
+    --accent-hover: #0056b3;
+    --error-bg: rgba(220, 53, 69, 0.1);
+    --error-border: #dc3545;
+    --success-bg: rgba(25, 135, 84, 0.1);
+    --success-border: #198754;
+    --delete-bg: #4f2125;
+    --delete-hover-bg: #6c2b31;
+    --accent-orange: #f5a623;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* 2. Layout and Navigation */
+.container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 2rem;
+}
+
+nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+nav h1 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+nav h1 a {
+    color: inherit;
+    text-decoration: none;
+}
+
+nav ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    gap: 20px;
+}
+
+nav a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+nav a:hover {
+    color: var(--text-color);
+}
+
+main {
+    padding: 2rem 0;
+}
+
+footer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 2rem 0;
+    border-top: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.footer-links {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.footer-links a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.footer-links a:hover {
+    color: var(--text-color);
+}
+
+.footer-links .separator {
+    color: var(--border-color);
+}
+
+
+/* 3. Containers and Cards */
+.form-container,
+.dashboard-container,
+.admin-container {
+    background: var(--container-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 2rem;
+    margin-top: 2rem;
+}
+
+h2 {
+    margin-top: 0;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+h3 {
+    color: var(--text-color);
+    margin-top: 0;
+}
+
+/* 4. Form Elements */
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+label {
+    display: block;
+    margin-bottom: .5rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+input[type="text"],
+input[type="password"],
+select {
+    width: 100%;
+    padding: .75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    box-sizing: border-box;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-size: 1rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+input[type="text"]:focus,
+input[type="password"]:focus,
+select:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 2px rgba(0, 112, 243, 0.3);
+}
+
+button {
+    background-color: var(--accent-color);
+    color: white;
+    padding: .75rem 1.5rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: background-color 0.2s ease;
+}
+
+button:hover {
+    background-color: var(--accent-hover);
+}
+
+button:disabled,
+button:disabled:hover {
+    background-color: #3a3a3a;
+    color: #888;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* 5. Alerts and Banners */
+.error, .success {
+    padding: 1rem;
+    border-radius: 6px;
+    border: 1px solid;
+    margin-bottom: 1.5rem;
+}
+
+.error {
+    color: var(--error-border);
+    background-color: var(--error-bg);
+    border-color: var(--error-border);
+}
+
+.success {
+    color: var(--success-border);
+    background-color: var(--success-bg);
+    border-color: var(--success-border);
+}
+
+/* 6. Dashboard & Stat Cards */
+
+.stats-grid {
+    display: grid;
+    /* FIX: Changed from auto-fit to a fixed 4-column layout */
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+}
+
+
+.stat-card {
+    background: var(--container-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1.5rem;
+    text-align: center;
+    height: 175px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.stat-card h3 {
+    margin: 0 0 0.5rem 0;
+    font-weight: 700;
+    color: var(--text-secondary);
+}
+
+/* Base style for all stat text elements */
+.stat-card p {
+    margin: 0;
+    line-height: 1.2;
+    transition: font-size 0.3s ease;
+}
+
+/* Specifics for the main rage score */
+.stat-card .rage-score {
+    font-size: 3.5rem; /* Base size for JS to start from */
+    font-weight: 700;
+}
+
+/* Specifics for the secondary stat values */
+.stat-card .stat-value {
+    font-size: 1.8rem; /* Base size for JS to start from */
+    font-weight: 500;
+    word-wrap: break-word; /* Allows long phrases to wrap if needed */
+}
+
+/* 7. Home Page Styles */
+.home-container {
+    text-align: center;
+    padding: 4rem 2rem;
+}
+
+.hero-section h2 {
+    font-size: 2.8rem;
+    font-weight: 700;
+    border-bottom: none;
+    margin-bottom: 1rem;
+}
+
+.hero-section .subtitle {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+    max-width: 600px;
+    margin: 0 auto 2.5rem auto;
+    line-height: 1.6;
+}
+
+.cta-buttons .btn {
+    display: inline-block;
+    padding: 0.8rem 2rem;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: 500;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.btn {
+    display: inline-block;
+    padding: 0.8rem 2rem;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: 500;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+}
+
+.btn-primary {
+    background-color: var(--accent-color);
+    color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background-color: var(--accent-hover);
+}
+
+.cta-buttons .btn:hover {
+    transform: translateY(-2px);
+}
+
+.cta-buttons .btn-primary {
+    background-color: var(--accent-color);
+    color: white;
+}
+
+.cta-buttons .btn-primary:hover {
+    background-color: var(--accent-hover);
+}
+
+/* 8. Settings Page Styles */
+.settings-container .form-container {
+    margin-top: 0;
+}
+
+.danger-zone {
+    background-color: var(--delete-bg);
+    border: 1px solid var(--error-border);
+    border-radius: 8px;
+    padding: 2rem;
+    margin-top: 2rem;
+}
+
+.danger-zone h3 {
+    color: var(--error-border);
+    margin-top: 0;
+}
+
+.danger-zone p {
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+}
+
+.danger-zone .delete-btn {
+    background-color: var(--error-border);
+    width: 100%;
+    padding: 0.8rem;
+}
+
+.danger-zone .delete-btn:hover {
+    background-color: #a72836;
+}
+
+/* 9. Admin Panel Styles */
+.user-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 2rem;
+}
+
+.user-table th,
+.user-table td {
+    border: 1px solid var(--border-color);
+    padding: 12px;
+    text-align: left;
+}
+
+.user-table th {
+    background-color: #1a1a1a;
+    font-weight: 500;
+}
+
+.user-creation-form form {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.user-creation-form input, .user-creation-form select {
+    margin-bottom: 0;
+}
+
+.action-forms {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.edit-user-form {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+
+.edit-user-form select {
+    padding: 0.4rem;
+    width: auto;
+    flex-grow: 1;
+}
+
+.edit-user-form button, .action-forms .delete-btn {
+    padding: 0.4rem 0.8rem;
+    width: 80px;
+    box-sizing: border-box;
+}
+
+button.delete-btn {
+    background-color: var(--delete-bg);
+}
+
+button.delete-btn:hover {
+    background-color: var(--delete-hover-bg);
+}
+
+/* 10. Loading & UI Animations */
+body.loading .container {
+    visibility: hidden;
+    opacity: 0;
+}
+
+.loader-wrapper {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--bg-color);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    transition: opacity 0.5s ease, visibility 0.5s ease;
+}
+
+.loader-wrapper.fade-out {
+    opacity: 0;
+    visibility: hidden;
+}
+
+.loader {
+    border: 6px solid var(--border-color);
+    border-top: 6px solid var(--accent-color);
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.stat-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card > h3,
+.stat-card > p {
+    transition: opacity 0.3s ease, font-size 0.3s ease;
+}
+
+.stat-card.is-updating::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--error-border);
+    animation: wipe-right 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+    z-index: 1;
+}
+
+.stat-card.is-updating > h3,
+.stat-card.is-updating > p {
+    position: relative;
+    z-index: 2;
+    animation: fade-reveal 0.8s ease forwards;
+}
+
+@keyframes wipe-right {
+    0% { transform: translateX(-101%); }
+    100% { transform: translateX(101%); }
+}
+
+@keyframes fade-reveal {
+    0% { opacity: 0; }
+    40% { opacity: 0; }
+    60% { opacity: 1; }
+    100% { opacity: 1; }
+}
+
+/* 11. Choice Button Styles */
+.choice-grid {
+    display: grid;
+    gap: 10px;
+    margin-bottom: 1.5rem;
+}
+
+.rage-level-grid {
+    grid-template-columns: repeat(auto-fill, minmax(45px, 1fr));
+}
+
+.phrase-grid {
+    grid-template-columns: 1fr;
+}
+
+.choice-btn {
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    background-color: var(--container-bg);
+    color: var(--text-secondary);
+    border-radius: 6px;
+    cursor: pointer;
+    text-align: center;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    font-size: 1rem;
+    width: 100%;
+    user-select: none;
+}
+
+.choice-btn:hover {
+    border-color: #555;
+    background-color: #222;
+    color: var(--text-color);
+    transform: translateY(-2px);
+}
+
+.choice-btn.selected {
+    background-color: var(--accent-orange);
+    border-color: var(--accent-orange);
+    color: #ffffff;
+    font-weight: 700;
+}
+
+/* 12. Submit Button Styles */
+.submit-container {
+    text-align: center;
+    margin-top: 2rem;
+}
+
+.btn-rage {
+    background-color: var(--error-border);
+    width: 100%;
+    max-width: 350px;
+}
+
+.btn-rage:hover:not(:disabled) {
+    background-color: #a72836;
+}
+
+/* 13. Session Page Specifics */
+.back-link-container {
+    text-align: center;
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.back-link-container .btn-secondary {
+    background-color: #2a2a2a;
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    padding: 0.75rem 1.5rem;
+}
+
+.back-link-container .btn-secondary:hover {
+    background-color: #3a3a3a;
+    color: var(--text-color);
+    border-color: #555;
+}
+
+/* 14. New Session Management Styles */
+
+/* Style for the new session creation form on the dashboard */
+.session-creation-form {
+    padding: 1.5rem;
+    margin-bottom: 2.5rem;
+}
+.session-creation-form h3 {
+    margin-bottom: 1rem;
+}
+.session-creation-form .form-group {
+    margin-bottom: 1rem;
+}
+.session-creation-form button {
+    width: 100%;
+}
+
+/* Styles for the hover-to-delete functionality */
+.session-item-wrapper {
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden; /* Crucial for the slide-in effect */
+    transition: box-shadow 0.2s ease;
+}
+
+.session-item-wrapper:hover {
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+
+.session-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem;
+    background: var(--container-bg);
+    border: 1px solid var(--border-color);
+    text-decoration: none;
+    color: var(--text-color);
+    width: 100%;
+    box-sizing: border-box;
+    /* FIX: Add transition for the slide effect */
+    transition: border-color 0.2s ease, transform 0.3s ease-in-out;
+}
+
+.session-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.session-name {
+    font-weight: 500;
+    font-size: 1.1rem;
+}
+
+.session-date {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}
+
+.session-deaths {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    white-space: nowrap; /* Prevents "Deaths" from wrapping */
+}
+
+/* NEW: The invisible hover area on the right */
+.delete-trigger {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 60px; /* Defines the width of the hoverable zone */
+    height: 100%;
+    z-index: 5; /* Ensures it's on top of other elements */
+}
+
+.session-delete-container {
+    position: absolute;
+    top: 0;
+    right: -120px;
+    width: 120px;
+    height: 100%;
+    transition: right 0.3s ease-in-out;
+}
+
+.session-delete-container .delete-btn {
+    width: 100%;
+    height: 100%;
+    background-color: var(--error-border);
+    border: none;
+    border-radius: 0;
+    color: white;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+}
+
+.session-delete-container form {
+    height: 100%;
+}
+
+.session-delete-container .delete-btn {
+    width: 100%;
+    height: 100%;
+    background-color: var(--error-border);
+}
+/* FIX: Make the emoji icon larger */
+.delete-icon {
+    font-size: 1.4rem;
+    line-height: 1;
+}
+
+/* NEW: The class added by JS triggers the animations */
+.session-item-wrapper.is-deleting .session-item {
+    /* Slide the main content to the left */
+    transform: translateX(-120px);
+    border-color: var(--accent-color);
+}
+
+.session-item-wrapper.is-deleting .session-delete-container {
+    /* Slide the delete button into view */
+    right: 0;
+}

@@ -1,0 +1,233 @@
+extends layout
+
+block content
+    .dashboard-container
+        //- Hidden div to pass server data to our client-side script
+        div(
+            id="dashboard-data"
+            style="display:none;"
+            data-total-rage=stats.totalRage
+            data-avg-rage=stats.averageRage
+            data-common-phrase=stats.mostCommonPhrase
+            data-total-deaths=stats.totalDeaths
+            data-created-at=session.created_at
+        )
+
+        //- FIX: Give the H2 an ID so we can update it with JS
+        h2#session-title Session
+
+        //- Grid to display session stats
+        .stats-grid
+            .stat-card
+                h3 Session Total Rage
+                p.rage-score#total-rage-display= stats.totalRage
+            .stat-card
+                h3 Deaths This Session
+                p.rage-score#total-deaths-display= stats.totalDeaths
+            .stat-card
+                h3 Session Avg. Rage
+                p.stat-value#avg-rage-display= stats.averageRage
+            .stat-card
+                h3 Session Go-To Phrase
+                p.stat-value#common-phrase-display= stats.mostCommonPhrase
+
+        .form-container
+            h3 A Death Has Occurred...
+            //- Form is unchanged
+            form(action=`/dashboard/session/${session.id}/rage`, method="POST")
+                input(type="hidden", name="rageLevel", id="rageLevelInput", required)
+                input(type="hidden", name="ragePhrase", id="ragePhraseInput", required)
+
+                .form-group
+                    label How upset are you? (1-10)
+                    .choice-grid.rage-level-grid#rageLevelContainer
+                        each i in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+                            button.choice-btn(type="button", data-value=i)= i
+
+                .form-group
+                    label Select a phrase:
+                    .choice-grid.phrase-grid#ragePhraseContainer
+                        button.choice-btn(type="button", data-value="I hate this game.") "I hate this game."
+                        button.choice-btn(type="button", data-value="This game is shit.") "This game is shit."
+                        button.choice-btn(type="button", data-value="That's it, I'm uninstalling.") "That's it, I'm uninstalling."
+
+                .submit-container
+                    button.btn-rage(type="submit", id="submitRageBtn", disabled) Add to Rage 🔥
+
+        //- Moved the link and turned it into a styled button
+        .back-link-container
+            a.btn.btn-primary(href="/dashboard") &larr; Back to All Sessions
+        .form-container
+            h3 Rename Session
+            form(action=`/dashboard/session/${session.id}/rename`, method="POST")
+                .form-group
+                    label(for="newName") Session Name
+                    input#newName(type="text", name="newName", value=session.name, required)
+                button(type="submit") Save Name
+
+
+
+    //- Client-side script for caching and instant UI updates
+    script.
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- 1. Element Selectors ---
+            const dataContainer = document.getElementById('dashboard-data');
+            const totalRageEl = document.getElementById('total-rage-display');
+            const totalDeathsEl = document.getElementById('total-deaths-display');
+            const avgRageEl = document.getElementById('avg-rage-display');
+            const commonPhraseEl = document.getElementById('common-phrase-display');
+            const sessionTitleEl = document.getElementById('session-title');
+            const statCards = document.querySelectorAll('.stats-grid .stat-card');
+
+            // --- 2. Reusable Functions ---
+            const cacheKey = `rageStats_user_#{user.id}_session_#{session.id}`;
+
+            const adjustFontAndGetRatio = (element, text, baseSize, maxLength, shrinkFactor, minSize) => {
+                let newSize = baseSize;
+                const textString = (text || '').toString();
+                if (textString.length > maxLength) {
+                    const overflow = textString.length - maxLength;
+                    newSize = Math.max(minSize, baseSize - overflow * shrinkFactor);
+                }
+                element.style.fontSize = `${newSize}rem`;
+                return newSize / baseSize;
+            };
+
+            // NEW: A specialized function to scale the phrase card based on width
+            const adjustPhraseFontToFit = (element, { baseSize, minSize, characterThreshold = 15, padding = 20 }) => {
+                // Set the base font size first. This is the default.
+                element.style.fontSize = `${baseSize}rem`;
+                element.style.whiteSpace = 'normal'; // Ensure default wrapping is on.
+
+                const text = element.textContent || '';
+
+                // Only apply special scaling if the phrase is long.
+                if (text.length > characterThreshold) {
+                    // Temporarily disable wrapping to measure the true single-line width.
+                    element.style.whiteSpace = 'nowrap';
+
+                    const container = element.parentElement;
+                    const containerWidth = container.clientWidth - padding;
+                    const textWidth = element.scrollWidth;
+
+                    // If the unwrapped text overflows the container...
+                    if (textWidth > containerWidth) {
+                        const overflowRatio = containerWidth / textWidth;
+                        let newSize = baseSize * overflowRatio;
+                        newSize = Math.max(newSize, minSize);
+                        element.style.fontSize = `${newSize}rem`;
+                    }
+
+                    // IMPORTANT: Restore the default wrapping behavior.
+                    element.style.whiteSpace = 'normal';
+                }
+            };
+
+            const updateUI = (stats) => {
+                if (!stats) return;
+
+                // --- UPDATED SCALING LOGIC ---
+
+                // Scale the three numeric cards independently
+                const totalRageNumber = parseInt(stats.totalRage, 10) || 0;
+                const formattedRage = totalRageNumber.toLocaleString('en-US');
+                totalRageEl.textContent = formattedRage;
+                adjustFontAndGetRatio(totalRageEl, formattedRage, 3.5, 6, 0.3, 1.5);
+
+                const totalDeathsNumber = parseInt(stats.totalDeaths, 10) || 0;
+                const formattedDeaths = totalDeathsNumber.toLocaleString('en-US');
+                totalDeathsEl.textContent = formattedDeaths;
+                adjustFontAndGetRatio(totalDeathsEl, formattedDeaths, 3.5, 6, 0.3, 1.5);
+
+                const avgRageBaseSize = 3.5;
+                avgRageEl.textContent = stats.averageRage;
+                adjustFontAndGetRatio(avgRageEl, stats.averageRage, avgRageBaseSize, 3, 0.4, 1.0);
+
+                // NEW: Independent, width-based scaling for the phrase card
+                commonPhraseEl.textContent = stats.mostCommonPhrase;
+                adjustPhraseFontToFit(commonPhraseEl, {
+                    baseSize: 1.8, // FIX: Removed the x2 multiplier
+                    minSize: 1.0,
+                    characterThreshold: 20
+                });
+            };
+
+            // --- 3. Page Load & Animation Logic ---
+            const cachedStats = localStorage.getItem(cacheKey);
+            if (cachedStats) {
+                try {
+                    updateUI(JSON.parse(cachedStats));
+                } catch (e) {
+                    console.error('Failed to parse cached stats', e);
+                    localStorage.removeItem(cacheKey);
+                }
+            }
+
+            if (dataContainer) {
+                const serverStats = {
+                    totalRage: dataContainer.dataset.totalRage,
+                    totalDeaths: dataContainer.dataset.totalDeaths,
+                    averageRage: dataContainer.dataset.avgRage,
+                    mostCommonPhrase: dataContainer.dataset.commonPhrase,
+                };
+
+                const createdAt = dataContainer.dataset.createdAt;
+                if (createdAt) {
+                    sessionTitleEl.textContent = `Session from ${new Date(createdAt).toLocaleString()}`;
+                }
+
+                const urlParams = new URLSearchParams(window.location.search);
+                if (urlParams.has('updated')) {
+                    statCards.forEach(card => card.classList.add('is-updating'));
+                    updateUI(serverStats);
+                    statCards[0].addEventListener('animationend', () => {
+                        statCards.forEach(card => card.classList.remove('is-updating'));
+                    }, { once: true });
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                } else {
+                    updateUI(serverStats);
+                }
+                localStorage.setItem(cacheKey, JSON.stringify(serverStats));
+            }
+
+            // --- 4. Interactive Form Logic (Unchanged) ---
+            const rageLevelContainer = document.getElementById('rageLevelContainer');
+            const ragePhraseContainer = document.getElementById('ragePhraseContainer');
+            const rageLevelInput = document.getElementById('rageLevelInput');
+            const ragePhraseInput = document.getElementById('ragePhraseInput');
+            const submitRageBtn = document.getElementById('submitRageBtn');
+
+            const checkFormValidity = () => {
+                submitRageBtn.disabled = !(rageLevelInput.value && ragePhraseInput.value);
+            };
+
+            const handleSelection = (container, input, clickedButton) => {
+                if (clickedButton.classList.contains('selected')) {
+                    clickedButton.classList.remove('selected');
+                    input.value = '';
+                } else {
+                    container.querySelectorAll('.choice-btn').forEach(btn => {
+                        btn.classList.remove('selected');
+                    });
+                    clickedButton.classList.add('selected');
+                    input.value = clickedButton.dataset.value;
+                }
+                checkFormValidity();
+            };
+
+            if (rageLevelContainer) {
+                rageLevelContainer.addEventListener('click', (e) => {
+                    if (e.target.matches('.choice-btn')) {
+                        handleSelection(rageLevelContainer, rageLevelInput, e.target);
+                    }
+                });
+            }
+
+            if (ragePhraseContainer) {
+                ragePhraseContainer.addEventListener('click', (e) => {
+                    if (e.target.matches('.choice-btn')) {
+                        handleSelection(ragePhraseContainer, ragePhraseInput, e.target);
+                    }
+                });
+            }
+        });
