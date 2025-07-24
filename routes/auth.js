@@ -3,7 +3,8 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 const { v4: uuidv4 } = require('uuid');
 const db = require('../db');
-const { verifyCaptcha } = require('../middleware/captcha');
+// FIX: The captcha middleware is no longer needed.
+// const { verifyCaptcha } = require('../middleware/captcha');
 const { sendVerificationEmail } = require('../utils/mailer');
 
 const router = express.Router();
@@ -11,10 +12,12 @@ const saltRounds = 10;
 
 // --- Registration Routes ---
 router.get('/register', (req, res) => {
-    res.render('register', { siteKey: process.env.CF_TURNSTILE_SITE_KEY });
+    // FIX: No longer passing the site key
+    res.render('register');
 });
 
-router.post('/register', verifyCaptcha, async (req, res) => {
+// FIX: Removed verifyCaptcha middleware from the route
+router.post('/register', async (req, res) => {
     const { username, email, password } = req.body;
 
     if (!username || !email || !password || password.length < 8) {
@@ -48,7 +51,7 @@ router.post('/register', verifyCaptcha, async (req, res) => {
     }
 });
 
-// --- Email Verification Route ---
+// --- Email Verification Route (Unchanged) ---
 router.get('/verify-email', async (req, res) => {
     const { token } = req.query;
     if (!token) {
@@ -77,10 +80,12 @@ router.get('/verify-email', async (req, res) => {
 
 // --- Login/Logout Routes ---
 router.get('/login', (req, res) => {
-    res.render('login', { siteKey: process.env.CF_TURNSTILE_SITE_KEY });
+    // FIX: No longer passing the site key
+    res.render('login');
 });
 
-router.post('/login', verifyCaptcha, async (req, res) => {
+// FIX: Removed verifyCaptcha middleware from the route
+router.post('/login', async (req, res) => {
     const { username, password } = req.body;
     try {
         const [rows] = await db.execute('SELECT * FROM users WHERE username = ?', [username]);
@@ -109,10 +114,10 @@ router.post('/login', verifyCaptcha, async (req, res) => {
             req.flash('error', 'Invalid username or password.');
             res.redirect('/login');
         }
-    } catch (error) {
-        console.error('Login error:', error);
-        res.status(500).send('Server error.');
-    }
+    } catch (error)
+    console.error('Login error:', error);
+    res.status(500).send('Server error.');
+}
 });
 
 router.get('/logout', (req, res) => {
