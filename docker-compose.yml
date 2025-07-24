@@ -5,9 +5,10 @@ services:
     build: .
     container_name: d2-rage-counter-app
     restart: unless-stopped
+    # FIX: Connect the app to both the internal app-network and the external mysql_network
     networks:
       - app-network
-    # FIX: Load all environment variables from the .env file
+      - mysql_network
     env_file:
       - ./.env
 
@@ -19,14 +20,13 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      # Mount our generated Nginx config, Certbot webroot, and the certificates
       - ./nginx/conf.d:/etc/nginx/conf.d
       - ./data/certbot/www:/var/www/certbot
       - ./data/certbot/conf:/etc/letsencrypt
     networks:
-      - app-network
+      - d2-network
     depends_on:
-      - app
+      - d2
 
   certbot:
     image: certbot/certbot
@@ -34,9 +34,12 @@ services:
     volumes:
       - ./data/certbot/www:/var/www/certbot
       - ./data/certbot/conf:/etc/letsencrypt
-    # This command runs 'certbot renew' twice a day to keep certs fresh.
     command: renew
 
 networks:
-  app-network:
+  # This network is for communication between our app and nginx
+  d2-network:
     driver: bridge
+  # FIX: Define the external network so our app can connect to it
+  mysql_network:
+    external: true

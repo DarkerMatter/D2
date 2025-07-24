@@ -1,4 +1,6 @@
 #!/bin/bash
+# FIX: Exit immediately if a command exits with a non-zero status.
+set -e
 
 # Check if .env file exists
 if [ ! -f .env ]; then
@@ -48,9 +50,10 @@ if [ ! -e "$data_path/conf/options-ssl-nginx.conf" ] || [ ! -e "$data_path/conf/
   echo
 fi
 
-echo "### Creating dummy certificate for $domains ..."
-path="/etc/letsencrypt/live/$domains"
-mkdir -p "$data_path/conf/live/$domains"
+echo "### Creating dummy certificate for ${DOMAIN_NAME} ..."
+# FIX: Use the domain name variable directly for clarity
+path="/etc/letsencrypt/live/${DOMAIN_NAME}"
+mkdir -p "$data_path/conf/live/${DOMAIN_NAME}"
 docker-compose run --rm --entrypoint "\
   openssl req -x509 -nodes -newkey rsa:$rsa_key_size -days 1\
     -keyout '$path/privkey.pem' \
@@ -62,14 +65,14 @@ echo "### Starting nginx ..."
 docker-compose up --force-recreate -d nginx
 echo
 
-echo "### Deleting dummy certificate for $domains ..."
+echo "### Deleting dummy certificate for ${DOMAIN_NAME} ..."
 docker-compose run --rm --entrypoint "\
-  rm -Rf /etc/letsencrypt/live/$domains && \
-  rm -Rf /etc/letsencrypt/archive/$domains && \
-  rm -Rf /etc/letsencrypt/renewal/$domains.conf" certbot
+  rm -Rf /etc/letsencrypt/live/${DOMAIN_NAME} && \
+  rm -Rf /etc/letsencrypt/archive/${DOMAIN_NAME} && \
+  rm -Rf /etc/letsencrypt/renewal/${DOMAIN_NAME}.conf" certbot
 echo
 
-echo "### Requesting Let's Encrypt certificate for $domains ..."
+echo "### Requesting Let's Encrypt certificate for ${DOMAIN_NAME} ..."
 domain_args=""
 for domain in "${domains[@]}"; do
   domain_args="$domain_args -d $domain"
