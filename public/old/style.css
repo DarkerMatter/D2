@@ -741,15 +741,21 @@ body.loading .container {
 }
 
 /* 15. Admin Page Enhancements */
-.user-creation-form {
-    margin-bottom: 2.5rem;
-}
 
+/* FIX: Reworked the user creation form grid */
 .user-creation-form .form-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    /* Default to a single column for small screens */
+    grid-template-columns: 1fr;
     gap: 1rem;
-    margin-bottom: 1.5rem;
+    margin-bottom: 0; /* Removed margin-bottom */
+}
+
+/* On screens wider than 992px, use a 4-column layout for inputs */
+@media (min-width: 992px) {
+    .user-creation-form .form-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
 }
 
 .user-creation-form h3 {
@@ -762,10 +768,12 @@ body.loading .container {
     margin-bottom: 0;
 }
 
-.user-creation-form button {
+/* FIX: This selector now correctly targets the button as a grid item */
+.user-creation-form .form-grid button {
     grid-column: 1 / -1; /* Make button span all columns */
     width: auto;
     justify-self: start;
+    margin-top: 1rem; /* Add some space above the button */
 }
 
 /* Add a container for the table to allow scrolling on small screens */
@@ -818,4 +826,281 @@ body.loading .container {
     background-color: #3a3a3a;
     color: var(--text-color);
     border-color: #555;
+}
+/* ... at the end of the file ... */
+
+/* 15. Admin Page Enhancements */
+
+/* A new card style for better section separation on the admin page */
+.admin-section-card {
+    background: var(--container-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+
+.admin-section-card h3 {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* FIX: New layout for the user creation form */
+.user-creation-form {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    align-items: end; /* Aligns form groups to the bottom for a clean look */
+}
+
+.user-creation-form .form-group {
+    margin-bottom: 0;
+}
+
+.user-creation-form .form-button-group button {
+    width: 100%;
+}
+
+/* Add a class to the username cell for easier JS selection */
+.user-table .user-username {
+    font-weight: 500;
+}
+
+/* NEW: A danger button style */
+.btn-danger {
+    background-color: var(--error-border);
+    color: white;
+}
+
+.btn-danger:hover {
+    background-color: #a72836; /* A darker red */
+}
+
+/* 16. Leaderboard Styles */
+
+.leaderboard-container {
+    background: var(--container-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 2rem;
+    margin-top: 2rem;
+}
+
+.sort-controls {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    flex-wrap: wrap;
+}
+
+.sort-controls a {
+    padding: 0.6rem 1.2rem;
+    border-radius: 6px;
+    text-decoration: none;
+    color: var(--text-secondary);
+    background-color: #222;
+    border: 1px solid var(--border-color);
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.sort-controls a:hover {
+    background-color: #333;
+    color: var(--text-color);
+    border-color: #555;
+}
+
+.sort-controls a.active {
+    background-color: var(--accent-color);
+    color: white;
+    border-color: var(--accent-color);
+    box-shadow: 0 2px 8px rgba(0, 112, 243, 0.3);
+}
+
+.leaderboard-table-container {
+    overflow-x: auto;
+}
+
+.leaderboard-table {
+    width: 100%;
+    min-width: 450px;
+    border-collapse: collapse;
+}
+
+.leaderboard-table th,
+.leaderboard-table td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.leaderboard-table th {
+    font-weight: 500;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.leaderboard-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.leaderboard-table .rank-cell {
+    font-weight: 700;
+    font-size: 1.2rem;
+    color: var(--accent-orange);
+    text-align: center;
+}
+
+.leaderboard-table .numeric-cell {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+/* 17. Home Page Spotlight */
+.top-rager-spotlight {
+    margin: 3rem auto;
+    padding: 2rem;
+    border: 1px solid var(--accent-orange);
+    border-radius: 8px;
+    background: linear-gradient(145deg, rgba(245, 166, 35, 0.05), rgba(245, 166, 35, 0.01));
+    max-width: 600px;
+}
+
+.top-rager-spotlight h3 {
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+    color: var(--accent-orange);
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.top-rager-spotlight .champion-name {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.top-rager-spotlight .champion-stats {
+    margin: 0.25rem 0 0 0;
+    color: var(--text-secondary);
+}
+/* 18. Side-by-Side Leaderboard Styles */
+
+.leaderboard-container > p {
+    color: var(--text-secondary);
+    text-align: center;
+    margin-top: -1.5rem;
+    margin-bottom: 2.5rem;
+}
+
+.leaderboard-grid {
+    display: grid;
+    grid-template-columns: 1fr; /* Default to a single column on small screens */
+    gap: 2rem;
+}
+
+.leaderboard-column h3 {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* Use a two-column layout on screens wider than 768px */
+@media (min-width: 768px) {
+    .leaderboard-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+/* 19. Admin Cache Management (NEW) */
+.cache-management {
+    margin-top: 2.5rem;
+}
+
+.cache-management p {
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+    max-width: 60ch; /* Limit line length for readability */
+}
+/* ... at the end of the file ... */
+
+/* 15. Admin Page Enhancements */
+
+/* A new card style for better section separation on the admin page */
+.admin-section-card {
+    background: var(--container-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+
+.admin-section-card h3 {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* 20. Custom Confirmation Modal Styles (NEW) */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.75);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    opacity: 1;
+    transition: opacity 0.2s ease-in-out;
+    padding: 1rem;
+}
+
+.modal-overlay.hidden {
+    opacity: 0;
+    pointer-events: none; /* Prevents interaction when hidden */
+}
+
+.modal-dialog {
+    background: var(--container-bg);
+    padding: 2rem;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    width: 100%;
+    max-width: 450px;
+    transform: scale(1);
+    transition: transform 0.2s ease-in-out;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+}
+
+.modal-overlay.hidden .modal-dialog {
+    transform: scale(0.95);
+}
+
+.modal-title {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+}
+
+.modal-body {
+    margin-bottom: 2rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
 }

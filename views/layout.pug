@@ -12,7 +12,13 @@ html(lang="en")
     title FTS.GG | D2 Rage Counter
     link(rel="icon", type="image/png", href="/images/logo.png")
 
-    link(rel="stylesheet", href="/css/style.css")
+    //- Link to all the new, separated CSS files
+    link(rel="stylesheet", href="/css/base.css")
+    link(rel="stylesheet", href="/css/layout.css")
+    link(rel="stylesheet", href="/css/components.css")
+    link(rel="stylesheet", href="/css/pages.css")
+    link(rel="stylesheet", href="/css/animations.css")
+
   body.loading
     //- Loader Animation HTML
     .loader-wrapper
@@ -20,17 +26,18 @@ html(lang="en")
 
     .container
       nav
-        //- Updated Header Title
         h1
           a(href="/") D2 Rage Counter
         ul
+          li
+            a(href="/leaderboard") Leaderboard
+          li
+            a(href="https://fts.gg/discord", target="_blank", rel="noopener noreferrer") Discord
           if user
             li
               a(href="/dashboard") Dashboard
             li
               a(href="/account") Account
-            li
-              a(href="https://fts.gg/discord", target="_blank", rel="noopener noreferrer") Discord
             if user.permission_level === 5
               li
                 a(href="/admin") Admin Panel
@@ -40,28 +47,49 @@ html(lang="en")
             li
               a(href="/login") Login
       main
-        //- --- FIX: Add this block to display flash messages ---
-        if success && success.length > 0
-          .success= success
-        if error && error.length > 0
-          .error= error
-        //- --- End of fix ---
+        //- Container for our custom flash messages
+        .flash-messages-container
+          if success && success.length > 0
+            each msg in success
+              .flash-message.flash-success
+                .flash-icon ✔
+                .flash-content
+                  strong Success
+                  p= msg
+                button.flash-close(type="button") &times;
+          if error && error.length > 0
+            each msg in error
+              .flash-message.flash-error
+                .flash-icon ✖
+                .flash-content
+                  strong Error
+                  p= msg
+                button.flash-close(type="button") &times;
 
         block content
       footer
-        //- Updated Footer with Links
         .footer-links
           a(href="https://fts.gg/discord", target="_blank", rel="noopener noreferrer") Discord
           span.separator |
           a(href="https://github.com/DarkerMatter/D2", target="_blank", rel="noopener noreferrer") GitHub
         p &copy; 2025 FTSGG LLC
 
+    //- FIX: Modal HTML is now a direct child of the body, outside the main container
+    #confirmation-modal.modal-overlay.hidden
+      //- FIX: The dialog is now correctly nested inside the overlay
+      .modal-dialog
+        h3.modal-title Confirmation Required
+        p.modal-body Are you sure you want to proceed with this action?
+        .modal-actions
+          button.btn-secondary#modal-cancel-btn Cancel
+          button.btn-danger#modal-confirm-btn Confirm
+
     //- Chart.js library from CDN
     script(src="https://cdn.jsdelivr.net/npm/chart.js")
 
     //- Client-side scripts for UI interactions
     script.
-      // Initial page load animation
+      // Fades out the loader once the page's resources are fully loaded.
       window.addEventListener('load', () => {
         const loader = document.querySelector('.loader-wrapper');
         if (loader) {
@@ -70,24 +98,82 @@ html(lang="en")
         }
       });
 
-      // Re-activate loader on specific page navigations
+      // Sets up all interactive elements once the DOM is ready.
       document.addEventListener('DOMContentLoaded', () => {
+        // --- 1. Re-activate loader on specific page navigations ---
         const loader = document.querySelector('.loader-wrapper');
         const body = document.body;
-
         const loadingLinks = document.querySelectorAll('a[href="/dashboard"], a[href="/account"], a[href="/admin"]');
-
         loadingLinks.forEach(link => {
           link.addEventListener('click', (e) => {
-            // Don't trigger for new tabs (Ctrl/Cmd+click) or middle-mouse clicks
-            if (e.ctrlKey || e.metaKey || e.which === 2) {
-              return;
-            }
-
+            if (e.ctrlKey || e.metaKey || e.which === 2) return;
             if (loader) {
               body.classList.add('loading');
               loader.classList.remove('fade-out');
             }
           });
         });
+
+        // --- 2. Logic to make flash messages dismissible ---
+        const closeButtons = document.querySelectorAll('.flash-close');
+        closeButtons.forEach(button => {
+          button.addEventListener('click', () => {
+            const message = button.closest('.flash-message');
+            message.classList.add('is-hiding');
+            // Remove the element from the DOM after the animation completes
+            message.addEventListener('transitionend', () => message.remove());
+          });
+        });
+
+        // --- 3. Reusable Custom Confirmation Modal Logic ---
+        const modal = document.getElementById('confirmation-modal');
+        if (modal) {
+          const modalTitle = modal.querySelector('.modal-title');
+          const modalBody = modal.querySelector('.modal-body');
+          const confirmBtn = document.getElementById('modal-confirm-btn');
+          const cancelBtn = document.getElementById('modal-cancel-btn');
+          let formToSubmit = null; // Variable to hold the form that needs submitting
+
+          // Find all forms that require confirmation via a data attribute
+          document.querySelectorAll('form[data-confirm]').forEach(form => {
+            form.addEventListener('submit', (e) => {
+              e.preventDefault(); // Prevent the form from submitting immediately
+              formToSubmit = e.target;
+
+              // Get custom messages from the form's data attributes
+              const title = form.dataset.confirmTitle || 'Confirmation Required';
+              const message = form.dataset.confirm;
+
+              // Populate and show the modal
+              modalTitle.textContent = title;
+              modalBody.textContent = message;
+              modal.classList.remove('hidden');
+            });
+          });
+
+          // Function to hide the modal
+          const hideModal = () => {
+            modal.classList.add('hidden');
+            formToSubmit = null; // Clear the stored form
+          };
+
+          // If the user clicks the final "Confirm" button, submit the stored form
+          confirmBtn.addEventListener('click', () => {
+            if (formToSubmit) {
+              formToSubmit.submit();
+            }
+          });
+
+          // Add event listeners to hide the modal
+          cancelBtn.addEventListener('click', hideModal);
+          modal.addEventListener('click', (e) => {
+            // Hide if the user clicks on the dark overlay background
+            if (e.target === modal) {
+              hideModal();
+            }
+          });
+        }
       });
+
+    //- Define a block where child templates can inject their own scripts
+    block scripts

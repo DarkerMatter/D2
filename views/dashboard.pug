@@ -26,30 +26,33 @@ block content
                             span.session-deaths #{session.death_count} Deaths
                         .delete-trigger
                             .session-delete-container
-                                form(action=`/dashboard/session/${session.id}/delete`, method="POST", onsubmit="return confirm('Are you sure you want to permanently delete this session and all its rage logs?');")
+                                //- FIX: Use the new data-confirm system instead of onsubmit
+                                form(
+                                    action=`/dashboard/session/${session.id}/delete`,
+                                    method="POST",
+                                    data-confirm=`Are you sure you want to permanently delete the session "${session.name}" and all its rage logs?`,
+                                    data-confirm-title="Delete Session"
+                                )
                                     button.delete-btn(type="submit", title="Delete Session")
                                         span.delete-icon 🗑️
                                         span Delete
             else
                 p You have no previous sessions.
 
-        //- NEW: Pagination Controls
+        //- Pagination Controls
         if totalPages > 1
             nav.pagination
-                //- Previous Button
                 if currentPage > 1
                     a(href=`/dashboard?page=${currentPage - 1}`) &laquo;
                 else
                     span.disabled &laquo;
 
-                //- Page Numbers
                 - for (let i = 1; i <= totalPages; i++)
                 if i === currentPage
                     span.active= i
                 else
                     a(href=`/dashboard?page=${i}`)= i
 
-                //- Next Button
                 if currentPage < totalPages
                     a(href=`/dashboard?page=${currentPage + 1}`) &raquo;
                 else
@@ -73,7 +76,7 @@ block content
                     trigger.addEventListener('mouseenter', () => {
                         wrapper.classList.add('is-deleting');
                     });
-                    trigger.addEventListener('mouseleave', () => {
+                    wrapper.addEventListener('mouseleave', () => {
                         wrapper.classList.remove('is-deleting');
                     });
                 }

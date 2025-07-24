@@ -3,20 +3,20 @@ extends layout
 block content
     .form-container.auth-form
         h2 Register
-        p Create an account to start tracking your rage.
+        //- FIX: Updated description for invite-only system
+        p You need a valid invite code to create an account.
         form(action="/register", method="POST")
             .form-group
                 label(for="username") Username
                 input(type="text", id="username", name="username", required)
+            //- FIX: Replaced Email field with Invite Code field
             .form-group
-                label(for="email") Email
-                input(type="email", id="email", name="email", required)
+                label(for="invite_code") Invite Code
+                input(type="text", id="invite_code", name="invite_code", required)
             .form-group
                 label(for="password") Password
                 input(type="password", id="password", name="password", required, minlength="8")
                 small Password must be at least 8 characters.
-
-            //- FIX: The Cloudflare Turnstile Widget has been removed.
 
             button.btn-primary(type="submit") Register
         .auth-switch

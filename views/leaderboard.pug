@@ -1,0 +1,51 @@
+extends layout
+
+block content
+    .leaderboard-container
+        h2 Leaderboards
+        p Top 10 users who have logged at least one death.
+
+        .leaderboard-grid
+            //- Left Column: Total Rage
+            .leaderboard-column
+                h3 Top 10 by Total Rage
+                .leaderboard-table-container
+                    table.leaderboard-table
+                        thead
+                            tr
+                                th Rank
+                                th Username
+                                th Total Rage
+                        tbody
+                            if rageLeaders && rageLeaders.length > 0
+                                each user, index in rageLeaders
+                                    tr
+                                        td.rank-cell ##{index + 1}
+                                        td= user.username
+                                        //- FIX: Added numeric-cell class
+                                        td.numeric-cell= Number(user.total_rage).toLocaleString()
+                            else
+                                tr
+                                    td(colspan="3") No data available.
+
+            //- Right Column: Total Deaths
+            .leaderboard-column
+                h3 Top 10 by Total Deaths
+                .leaderboard-table-container
+                    table.leaderboard-table
+                        thead
+                            tr
+                                th Rank
+                                th Username
+                                th Total Deaths
+                        tbody
+                            if deathLeaders && deathLeaders.length > 0
+                                each user, index in deathLeaders
+                                    tr
+                                        td.rank-cell ##{index + 1}
+                                        td= user.username
+                                        //- FIX: Added numeric-cell class
+                                        td.numeric-cell= Number(user.total_deaths).toLocaleString()
+                            else
+                                tr
+                                    td(colspan="3") No data available.

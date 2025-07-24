@@ -1,123 +1,202 @@
 extends layout
 
 block content
-    .admin-container
-        h2 Account Overview
+    //- The main heading for the page
+    h2 Account Settings
 
-        //- Overall Stats Grid
+    //- Analytics Section
+    .dashboard-container
+        h3 Lifetime Analytics
+        //- Grid for total stats
         .stats-grid
             .stat-card
-                h3 Overall Rage
-                p.rage-score= overallStats.totalRage.toLocaleString()
+                h3 Total Lifetime Rage
+                p.rage-score= stats.total_rage.toLocaleString()
             .stat-card
-                h3 Overall Deaths
-                p.rage-score= overallStats.totalDeaths.toLocaleString()
+                h3 Total Lifetime Deaths
+                p.rage-score= stats.total_deaths.toLocaleString()
             .stat-card
-                h3 Overall Avg. Rage
-                p.rage-score= overallStats.averageRage
+                h3 Lifetime Avg. Rage
+                p.rage-score= stats.averageRage
             .stat-card
-                h3 All-Time Go-To Phrase
-                p.stat-value= overallStats.mostCommonPhrase
+                h3 Lifetime Go-To Phrase
+                p.stat-value= stats.mostCommonPhrase
 
-        //- NEW: Container for the chart
-        .form-container
-            h3 Rage Phrase Ussage
-            div
-                canvas#ragePhraseChart
+        //- Updated container for the on-demand chart
+        .chart-container
+            h4 Rage Progression
+            p.chart-description Average rage level for each subsequent death across all of your sessions.
+            canvas#rageProgressionChart
+            .chart-actions
+                button.btn.btn-primary#generateChartBtn Generate Graph
 
-        //- Flash Messages
-        if error && error.length > 0
-            .error= error
-        if success && success.length > 0
-            .success= success
+    //- FIX: Corrected indentation on this container
+    .form-container
+        h3 Invite Codes
+        p As a trusted member, you can generate invite codes for others to join.
+        if inviteCodes && inviteCodes.length > 0
+            p Your available invite codes:
+            ul.invite-code-list
+                each item in inviteCodes
+                    li.invite-code-item
+                        span.invite-code= item.code
+                        button.btn-copy(data-code=item.code) Copy
+        else
+            p You have no available invite codes.
 
-        //- Change Password Form
-        .form-container
-            h3 Change Your Password
-            form(action="/account/change-password", method="POST")
-                //- ... (form content is unchanged)
-                .form-group
-                    label(for="currentPassword") Current Password
-                    input(type="password", id="currentPassword", name="currentPassword", required)
-                .form-group
-                    label(for="newPassword") New Password
-                    input(type="password", id="newPassword", name="newPassword", required, minlength="8")
-                button(type="submit") Update Password
+        if canGenerateCode
+            .chart-actions
+                form(action="/account/generate-invite", method="POST")
+                    button.btn.btn-primary(type="submit") Generate New Invite Code
+        else if user.permission_level !== 5
+            p.text-secondary You can generate a new code next month.
 
-        //- Danger Zone
-        .danger-zone
-            h3 Danger Zone
-            p This action is permanent and cannot be undone. This will delete all of your logged rage events, sessions, and reset your overall stats to zero.
-            form(action="/account/delete-history", method="POST", onsubmit="return confirm('Are you absolutely sure you want to delete all of your rage history? This cannot be undone.');")
-                button.delete-btn(type="submit") Delete My Entire History
+    //- Card for changing password
+    .form-container
+        form(action="/account/change-password", method="POST")
+            h3 Change Password
+            .form-group
+                label(for="currentPassword") Current Password
+                input#currentPassword(type="password", name="currentPassword", required)
+            .form-group
+                label(for="newPassword") New Password
+                input#newPassword(type="password", name="newPassword", required)
+            .form-group
+                label(for="confirmPassword") Confirm New Password
+                input#confirmPassword(type="password", name="confirmPassword", required)
+            button.btn-primary(type="submit") Update Password
 
-    //- NEW: Client-side script to render the chart
+    //- Card for changing email
+    .form-container
+        form(action="/account/change-email", method="POST")
+            h3 Change Email Address
+            .form-group
+                label(for="newEmail") New Email Address
+                input#newEmail(type="email", name="newEmail", required, value=user.email)
+            .form-group
+                label(for="emailConfirmPassword") Current Password (for verification)
+                input#emailConfirmPassword(type="password", name="currentPassword", required, placeholder="Enter your password to confirm")
+            button.btn-primary(type="submit") Update Email
+
+    //- Danger Zone for clearing data
+    .danger-zone
+        h3 Clear All Session Data
+        p This will permanently delete all of your recorded sessions and rage logs. Your account will not be deleted, but your stats will be reset to zero. This action cannot be undone.
+        form(
+            action="/account/clear-data",
+            method="POST",
+            data-confirm="Are you absolutely sure you want to delete all of your session data? This action is irreversible.",
+            data-confirm-title="Confirm Data Deletion"
+        )
+            button.delete-btn(type="submit") Delete All My Data
+
+block scripts
     script.
-        document.addEventListener('DOMContentLoaded', async () => {
-            const ctx = document.getElementById('ragePhraseChart');
-            if (!ctx) return;
+        // --- Copy to Clipboard for Invite Codes ---
+        document.querySelectorAll('.btn-copy').forEach(button => {
+            button.addEventListener('click', () => {
+                const codeToCopy = button.dataset.code;
+                navigator.clipboard.writeText(codeToCopy).then(() => {
+                    button.textContent = 'Copied!';
+                    setTimeout(() => {
+                        button.textContent = 'Copy';
+                    }, 2000);
+                }).catch(err => {
+                    console.error('Failed to copy code:', err);
+                    alert('Failed to copy code.');
+                });
+            });
+        });
 
-            try {
-                // Fetch the data from our new API endpoint
-                const response = await fetch('/account/chart-data');
-                if (!response.ok) throw new Error('Failed to fetch chart data');
-                const { labels, data } = await response.json();
+        // --- On-Demand Chart Generation ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const generateBtn = document.getElementById('generateChartBtn');
+            const canvas = document.getElementById('rageProgressionChart');
+            const ctx = canvas.getContext('2d');
+            let rageChart = null; // Variable to hold the chart instance
 
-                // If there's no data, don't render the chart
-                if (data.length === 0) {
-                    ctx.parentElement.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">No rage phrases logged yet. Go die some more!</p>';
+            const renderChart = (chartData) => {
+                if (rageChart) {
+                    rageChart.destroy();
+                }
+                if (!chartData || chartData.length === 0) {
+                    canvas.style.display = 'none';
                     return;
                 }
+                canvas.style.display = 'block';
 
-                new Chart(ctx, {
-                    type: 'bar', // We'll use a bar chart
+                const labels = chartData.map(d => `Death ${d.death_number}`);
+                const data = chartData.map(d => parseFloat(d.average_rage).toFixed(2));
+
+                const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+                gradient.addColorStop(0, 'rgba(220, 53, 69, 0.6)');
+                gradient.addColorStop(1, 'rgba(220, 53, 69, 0.05)');
+
+                rageChart = new Chart(ctx, {
+                    type: 'line',
                     data: {
-                        labels: labels, // e.g., ["I hate this game.", "This game is shit."]
+                        labels: labels,
                         datasets: [{
-                            label: 'Times Used',
-                            data: data, // e.g., [42, 27]
-                            backgroundColor: 'rgba(245, 166, 35, 0.6)', // --accent-orange with transparency
-                            borderColor: 'rgba(245, 166, 35, 1)',
-                            borderWidth: 1
+                            label: 'Average Rage Level',
+                            data: data,
+                            borderColor: 'rgba(220, 53, 69, 1)',
+                            backgroundColor: gradient,
+                            fill: true,
+                            tension: 0.4,
+                            pointBackgroundColor: '#fff',
+                            pointBorderColor: 'rgba(220, 53, 69, 1)',
+                            pointBorderWidth: 2,
+                            pointHoverRadius: 7,
+                            pointHoverBackgroundColor: '#fff',
+                            pointHoverBorderColor: 'rgba(220, 53, 69, 1)',
                         }]
                     },
                     options: {
-                        indexAxis: 'y', // Makes the bar chart horizontal, better for long labels
                         responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                display: false // Hide the legend as it's redundant
+                        maintainAspectRatio: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 10,
+                                grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                                ticks: { color: '#888' }
                             },
-                            tooltip: {
-                                titleFont: { size: 14 },
-                                bodyFont: { size: 12 },
+                            x: {
+                                grid: { display: false },
+                                ticks: { color: '#888' }
                             }
                         },
-                        scales: {
-                            x: { // The horizontal axis (our counts)
-                                beginAtZero: true,
-                                ticks: {
-                                    color: 'rgba(234, 234, 234, 0.7)', // --text-color
-                                    precision: 0 // Ensure whole numbers
-                                },
-                                grid: {
-                                    color: 'rgba(51, 51, 51, 0.5)' // --border-color
-                                }
-                            },
-                            y: { // The vertical axis (our phrases)
-                                ticks: {
-                                    color: 'rgba(234, 234, 234, 0.7)' // --text-color
-                                },
-                                grid: {
-                                    display: false // Hide vertical grid lines for a cleaner look
-                                }
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                backgroundColor: '#000',
+                                titleColor: '#fff',
+                                bodyColor: '#fff',
+                                borderColor: '#333',
+                                borderWidth: 1
                             }
                         }
                     }
                 });
-            } catch (error) {
-                console.error('Chart rendering error:', error);
-                ctx.parentElement.innerHTML = '<p style="text-align: center; color: var(--error-border);">Could not load chart data.</p>';
-            }
+            };
+
+            generateBtn.addEventListener('click', async () => {
+                generateBtn.disabled = true;
+                generateBtn.textContent = 'Generating...';
+
+                try {
+                    const response = await fetch('/account/analytics/rage-progression');
+                    if (!response.ok) {
+                        throw new Error(`Server returned status: ${response.status}`);
+                    }
+                    const data = await response.json();
+                    renderChart(data);
+                } catch (error) {
+                    console.error('Failed to fetch or render chart:', error);
+                    generateBtn.textContent = 'Failed. Try Again.';
+                } finally {
+                    generateBtn.disabled = false;
+                    generateBtn.textContent = 'Update Graph';
+                }
+            });
         });

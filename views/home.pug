@@ -3,10 +3,18 @@ extends layout
 block content
     .home-container
         .hero-section
-            h2 Welcome to the Destiny 2 Rage Counter
-            p.subtitle Track your most tilting moments in Destiny 2. Log your deaths, rate your rage, and see your stats climb over time.
+            h2 Track Your Descent into Madness
+            p.subtitle A simple, no-nonsense tool to quantify your rage during Destiny 2 sessions. Log in, create a session, and start counting.
+
+            //- NEW: Top Rager display section
+            if topRager
+                .top-rager-spotlight
+                    h3 Current Rage Champion
+                    p.champion-name= topRager.username
+                    p.champion-stats with a staggering #{Number(topRager.total_rage).toLocaleString()} total rage points.
+
             .cta-buttons
                 if user
-                    a.btn.btn-primary(href="/dashboard") Go to Your Dashboard
+                    a.btn.btn-primary(href="/dashboard") Go to Dashboard
                 else
-                    a.btn.btn-primary(href="/login") Login to Get Started
+                    a.btn.btn-primary(href="/login") Get Started

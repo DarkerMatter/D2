@@ -1,91 +1,105 @@
 // routes/auth.js
 const express = require('express');
 const bcrypt = require('bcrypt');
-const { v4: uuidv4 } = require('uuid');
 const db = require('../db');
-// FIX: The captcha middleware is no longer needed.
-// const { verifyCaptcha } = require('../middleware/captcha');
-const { sendVerificationEmail } = require('../utils/mailer');
 
 const router = express.Router();
 const saltRounds = 10;
 
 // --- Registration Routes ---
 router.get('/register', (req, res) => {
-    // FIX: No longer passing the site key
     res.render('register');
 });
 
-// FIX: Removed verifyCaptcha middleware from the route
-router.post('/register', async (req, res) => {
-    const { username, email, password } = req.body;
+// Complete overhaul of the registration logic for an invite-only system
+router.post('/register', async (req, res, next) => {
+    const { username, password, invite_code } = req.body;
 
-    if (!username || !email || !password || password.length < 8) {
-        req.flash('error', 'All fields are required and password must be at least 8 characters.');
+    if (!username || !password || !invite_code) {
+        req.flash('error', 'Username, password, and a valid invite code are required.');
+        return res.redirect('/register');
+    }
+    if (password.length < 8) {
+        req.flash('error', 'Password must be at least 8 characters long.');
         return res.redirect('/register');
     }
 
+    let connection;
     try {
-        const [existingUser] = await db.execute('SELECT id FROM users WHERE username = ? OR email = ?', [username, email]);
-        if (existingUser.length > 0) {
-            req.flash('error', 'A user with that username or email already exists.');
+        connection = await db.getConnection();
+        await connection.beginTransaction();
+
+        // 1. Validate the invite code
+        const [codes] = await connection.execute(
+            'SELECT id, used_by_user_id FROM invite_codes WHERE code = ? FOR UPDATE',
+            [invite_code]
+        );
+
+        if (codes.length === 0) {
+            req.flash('error', 'Invalid invite code.');
+            await connection.rollback();
             return res.redirect('/register');
         }
 
-        const hashedPassword = await bcrypt.hash(password, saltRounds);
-        const verificationToken = uuidv4();
-
-        await db.execute(
-            'INSERT INTO users (username, email, password, email_verification_token) VALUES (?, ?, ?, ?)',
-            [username, email, hashedPassword, verificationToken]
-        );
-
-        await sendVerificationEmail(email, verificationToken);
-
-        res.render('verification-pending', { email });
-
-    } catch (error) {
-        console.error('Registration error:', error);
-        req.flash('error', 'A server error occurred during registration.');
-        res.redirect('/register');
-    }
-});
-
-// --- Email Verification Route (Unchanged) ---
-router.get('/verify-email', async (req, res) => {
-    const { token } = req.query;
-    if (!token) {
-        return res.status(400).send('Verification token is missing.');
-    }
-
-    try {
-        const [userRows] = await db.execute('SELECT id FROM users WHERE email_verification_token = ?', [token]);
-        if (userRows.length === 0) {
-            return res.render('error', { title: 'Invalid Token', message: 'This verification link is invalid or has already been used.' });
+        const invite = codes[0];
+        if (invite.used_by_user_id) {
+            req.flash('error', 'This invite code has already been used.');
+            await connection.rollback();
+            return res.redirect('/register');
         }
 
-        const userId = userRows[0].id;
-        await db.execute(
-            'UPDATE users SET email_verified_at = NOW(), email_verification_token = NULL WHERE id = ?',
-            [userId]
+        // 2. Check if username is already taken
+        const [existingUsers] = await connection.execute('SELECT id FROM users WHERE username = ?', [username]);
+        if (existingUsers.length > 0) {
+            req.flash('error', 'That username is already taken.');
+            await connection.rollback();
+            return res.redirect('/register');
+        }
+
+        // 3. Create the new user
+        const hashedPassword = await bcrypt.hash(password, saltRounds);
+        const [result] = await connection.execute(
+            'INSERT INTO users (username, password, permission_level) VALUES (?, ?, ?)',
+            [username, hashedPassword, 1] // Default permission level is 1 (User)
+        );
+        const newUserId = result.insertId;
+
+        // 4. Mark the invite code as used
+        await connection.execute(
+            'UPDATE invite_codes SET used_by_user_id = ?, used_at = NOW() WHERE id = ?',
+            [newUserId, invite.id]
         );
 
-        res.render('verification-success');
+        await connection.commit();
+
+        // 5. Automatically log the new user in
+        req.session.user = {
+            id: newUserId,
+            username: username,
+            permission_level: 1
+        };
+        req.session.save((err) => {
+            if (err) {
+                return next(err);
+            }
+            req.flash('success', 'Welcome! Your account has been created.');
+            res.redirect('/dashboard');
+        });
 
     } catch (error) {
-        console.error('Email verification error:', error);
-        res.status(500).send('A server error occurred.');
+        if (connection) await connection.rollback();
+        next(error); // Pass to global error handler
+    } finally {
+        if (connection) connection.release();
     }
 });
 
 // --- Login/Logout Routes ---
 router.get('/login', (req, res) => {
-    // FIX: No longer passing the site key
     res.render('login');
 });
 
-// FIX: Removed verifyCaptcha middleware from the route
-router.post('/login', async (req, res) => {
+router.post('/login', async (req, res, next) => {
     const { username, password } = req.body;
     try {
         const [rows] = await db.execute('SELECT * FROM users WHERE username = ?', [username]);
@@ -96,11 +110,8 @@ router.post('/login', async (req, res) => {
 
         const user = rows[0];
 
-        // IMPORTANT: Check if email is verified
-        if (!user.email_verified_at) {
-            req.flash('error', 'You must verify your email address before you can log in.');
-            return res.redirect('/login');
-        }
+        // FIX: Removed the email verification check as it's no longer part of the flow
+
         if (user.permission_level === 0) {
             req.flash('error', 'This account has been suspended.');
             return res.redirect('/login');
@@ -111,15 +122,12 @@ router.post('/login', async (req, res) => {
             req.session.user = {
                 id: user.id,
                 username: user.username,
+                email: user.email, // Keep email in session if it exists
                 permission_level: user.permission_level
             };
-            // Use a callback with session.save to prevent race conditions on redirect
             req.session.save((err) => {
                 if (err) {
-                    // Handle session save error
-                    console.error('Session save error:', err);
-                    req.flash('error', 'Could not log you in. Please try again.');
-                    return res.redirect('/login');
+                    return next(err);
                 }
                 res.redirect('/dashboard');
             });
@@ -127,22 +135,21 @@ router.post('/login', async (req, res) => {
             req.flash('error', 'Invalid username or password.');
             res.redirect('/login');
         }
-        // --- FIX: Corrected the try...catch block syntax ---
     } catch (error) {
-        console.error('Login error:', error);
-        req.flash('error', 'A server error occurred. Please try again.');
-        res.redirect('/login');
+        next(error);
     }
 });
 
-router.get('/logout', (req, res) => {
+router.get('/logout', (req, res, next) => {
     req.session.destroy(err => {
         if (err) {
-            return res.redirect('/dashboard');
+            return next(err);
         }
         res.clearCookie('connect.sid');
         res.redirect('/');
     });
 });
+
+// FIX: All email verification routes are now obsolete and have been removed.
 
 module.exports = router;

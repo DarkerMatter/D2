@@ -4,61 +4,110 @@ block content
     .admin-container
         h2 Admin Panel
 
-        //- Section for creating a new user
-        .form-container.user-creation-form
+        .admin-section-card
             h3 Create New User
-            form(action="/admin/create-user", method="POST")
-                .form-grid
-                    .form-group
-                        label(for="username") Username
-                        input#username(type="text", name="username", required)
-                    .form-group
-                        label(for="email") Email
-                        input#email(type="email", name="email", required)
-                    .form-group
-                        label(for="password") Password
-                        input#password(type="password", name="password", required)
-                    .form-group
-                        label(for="permission_level") Permission Level
-                        select#permission_level(name="permission_level", required)
-                            option(value="1" selected) User
-                            option(value="5") Admin
-                button.btn-primary(type="submit") Create User
+            form.user-creation-form(action="/admin/create-user", method="POST")
+                .form-group
+                    label(for="username") Username
+                    input#username(type="text", name="username", required)
+                //- FIX: Email field removed
+                .form-group
+                    label(for="password") Password
+                    input#password(type="password", name="password", required)
+                .form-group
+                    label(for="permission_level") Permission Level
+                    select#permission_level(name="permission_level", required)
+                        option(value="1" selected) User
+                        option(value="5") Admin
+                .form-group.form-button-group
+                    button.btn-primary(type="submit") Create User
 
-        //- Section for managing existing users
-        h3 Manage Users
-        .user-table-container
-            table.user-table
-                thead
-                    tr
-                        th Username
-                        th Email
-                        th Status
-                        th Permissions
-                        th Actions
-                tbody
-                    each listUser in users
+        .admin-section-card
+            h3 Manage Users
+            .user-table-container
+                table.user-table
+                    thead
                         tr
-                            td= listUser.username
-                            td= listUser.email
-                            td
-                                if listUser.email_verified_at
-                                    span.status-verified ✔ Verified
-                                else
-                                    span.status-unverified ✖ Unverified
-                            td
-                                form.edit-user-form(action=`/admin/edit-user/${listUser.id}`, method="POST")
-                                    select(name="permission_level", onchange="this.form.submit()", disabled=listUser.id === user.id)
-                                        option(value="0", selected=listUser.permission_level === 0) Banned
-                                        option(value="1", selected=listUser.permission_level === 1) User
-                                        option(value="5", selected=listUser.permission_level === 5) Admin
-                            td
-                                .action-forms
-                                    //- Show verify button only if user is not verified and it's not the current admin
-                                    if !listUser.email_verified_at && listUser.id !== user.id
-                                        form(action=`/admin/verify-user/${listUser.id}`, method="POST")
-                                            button.btn-secondary(type="submit") Verify
-                                    //- Prevent admin from deleting themselves
-                                    if listUser.id !== user.id
-                                        form(action=`/admin/delete-user/${listUser.id}`, method="POST", onsubmit="return confirm('Are you sure you want to delete this user? This action cannot be undone.');")
-                                            button.delete-btn(type="submit") Delete
+                            th Username
+                            //- FIX: Removed Email column
+                            th Permissions
+                            th Actions
+                    tbody
+                        each listUser in users
+                            tr
+                                td.user-username= listUser.username
+                                //- FIX: Removed Email column content
+                                td
+                                    form.edit-user-form(action=`/admin/edit-user/${listUser.id}`, method="POST")
+                                        select(name="permission_level", onchange="this.form.submit()", disabled=listUser.id === user.id)
+                                            option(value="0", selected=listUser.permission_level === 0) Banned
+                                            option(value="1", selected=listUser.permission_level === 1) User
+                                            option(value="5", selected=listUser.permission_level === 5) Admin
+                                td
+                                    .action-forms
+                                        if listUser.id !== user.id
+                                            form(
+                                                action=`/admin/delete-user/${listUser.id}`,
+                                                method="POST",
+                                                data-confirm=`Are you sure you want to permanently delete the user "${listUser.username}"? This action cannot be undone.`,
+                                                data-confirm-title="Delete User"
+                                            )
+                                                button.delete-btn(type="submit") Delete
+
+        //- NEW: Invite Code Management Section
+        .admin-section-card
+            h3 Invite Code Management
+            .invite-management-actions
+                p Generate a new invite code for a user to join.
+                form(action="/admin/generate-invite", method="POST")
+                    button.btn-primary(type="submit") Generate Invite Code
+
+            .user-table-container
+                table.user-table
+                    thead
+                        tr
+                            th Invite Code
+                            th Created By
+                            th Status
+                            th Actions
+                    tbody
+                        if invites.length > 0
+                            each invite in invites
+                                tr
+                                    td.invite-code= invite.code
+                                    td= invite.creator_username
+                                    td
+                                        if invite.used_by_username
+                                            span.status-used Used by #{invite.used_by_username}
+                                        else
+                                            span.status-unused Unused
+                                    td
+                                        .action-forms
+                                            form(
+                                                action=`/admin/delete-invite/${invite.id}`,
+                                                method="POST",
+                                                data-confirm=`Are you sure you want to delete the invite code "${invite.code}"?`,
+                                                data-confirm-title="Delete Invite Code"
+                                            )
+                                                button.delete-btn(type="submit") Delete
+                        else
+                            tr
+                                td(colspan="4" style="text-align: center; color: var(--text-secondary);") No invite codes found.
+
+        .admin-section-card
+            h3 Cache Management
+            p The leaderboard data is cached for 5 minutes to improve performance. Purge the cache to force an immediate update from the database.
+            form(action="/admin/purge-cache", method="POST")
+                button.btn-danger(type="submit") Purge Leaderboard Cache
+
+block scripts
+    //- Script to format timestamps on the client side
+    script.
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('[data-timestamp]').forEach(el => {
+                const timestamp = el.getAttribute('data-timestamp');
+                if (timestamp) {
+                    el.textContent = new Date(timestamp).toLocaleString();
+                }
+            });
+        });

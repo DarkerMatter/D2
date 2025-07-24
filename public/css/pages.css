@@ -1,0 +1,466 @@
+/* public/css/pages.css */
+
+/* --- Page-specific Containers --- */
+.form-container,
+.dashboard-container,
+.admin-container,
+.leaderboard-container {
+    background: var(--container-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 2rem;
+    margin-top: 2rem;
+}
+
+/* --- Home Page --- */
+.home-container {
+    text-align: center;
+    padding: 4rem 2rem;
+}
+.hero-section h2 {
+    font-size: 2.8rem;
+    font-weight: 700;
+    border-bottom: none;
+    margin-bottom: 1rem;
+}
+.hero-section .subtitle {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+    max-width: 600px;
+    margin: 0 auto 2.5rem auto;
+    line-height: 1.6;
+}
+.top-rager-spotlight {
+    margin: 3rem auto;
+    padding: 2rem;
+    border: 1px solid var(--accent-orange);
+    border-radius: 8px;
+    background: linear-gradient(145deg, rgba(245, 166, 35, 0.05), rgba(245, 166, 35, 0.01));
+    max-width: 600px;
+}
+.top-rager-spotlight h3 {
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+    color: var(--accent-orange);
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.top-rager-spotlight .champion-name {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0;
+}
+.top-rager-spotlight .champion-stats {
+    margin: 0.25rem 0 0 0;
+    color: var(--text-secondary);
+}
+
+/* --- Dashboard & Session Pages --- */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+}
+.stat-card {
+    background: var(--container-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1.5rem;
+    text-align: center;
+    height: 175px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+.stat-card h3 {
+    margin: 0 0 0.5rem 0;
+    font-weight: 700;
+    color: var(--text-secondary);
+}
+.stat-card p {
+    margin: 0;
+    line-height: 1.2;
+    transition: font-size 0.3s ease;
+}
+.stat-card .rage-score {
+    font-size: 3.5rem;
+    font-weight: 700;
+}
+.stat-card .stat-value {
+    font-size: 1.8rem;
+    font-weight: 500;
+    word-wrap: break-word;
+}
+.session-creation-form {
+    padding: 1.5rem;
+    margin-bottom: 2.5rem;
+}
+.session-item-wrapper {
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: box-shadow 0.2s ease;
+    margin-bottom: 1rem;
+}
+.session-item-wrapper:hover {
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+.session-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem;
+    background: var(--container-bg);
+    border: 1px solid var(--border-color);
+    text-decoration: none;
+    color: var(--text-color);
+    width: 100%;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease, transform 0.3s ease-in-out;
+}
+.session-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+.session-name {
+    font-weight: 500;
+    font-size: 1.1rem;
+}
+.session-date {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}
+.session-deaths {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    white-space: nowrap;
+}
+.delete-trigger {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 60px;
+    height: 100%;
+    z-index: 5;
+}
+.session-delete-container {
+    position: absolute;
+    top: 0;
+    right: -120px;
+    width: 120px;
+    height: 100%;
+    transition: right 0.3s ease-in-out;
+}
+.session-delete-container form {
+    height: 100%;
+}
+.session-delete-container .delete-btn {
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+}
+.delete-icon {
+    font-size: 1.4rem;
+    line-height: 1;
+}
+#session-title {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+#session-name-display {
+    font-weight: 600;
+}
+#session-date-display {
+    font-size: 0.6em;
+    font-weight: 400;
+    color: #a0a0a0;
+    opacity: 0.8;
+}
+.submit-container {
+    text-align: center;
+    margin-top: 2rem;
+}
+.back-link-container {
+    text-align: center;
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border-color);
+}
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border-color);
+}
+.pagination a, .pagination span {
+    color: var(--text-secondary);
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+.pagination a:hover {
+    background-color: #222;
+    color: var(--text-color);
+    border-color: #555;
+}
+.pagination .active {
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
+    color: white;
+    font-weight: 700;
+}
+.pagination .disabled {
+    color: #444;
+    border-color: #222;
+    cursor: not-allowed;
+}
+
+/* --- Account/Settings Page --- */
+.danger-zone {
+    background-color: var(--delete-bg);
+    border: 1px solid var(--error-border);
+    border-radius: 8px;
+    padding: 2rem;
+    margin-top: 2rem;
+}
+.danger-zone h3 {
+    color: var(--error-border);
+    margin-top: 0;
+}
+.danger-zone p {
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+}
+.danger-zone .delete-btn {
+    width: 100%;
+    padding: 0.8rem;
+}
+
+/* --- Admin Page --- */
+.admin-section-card {
+    background: var(--container-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+.admin-section-card h3 {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.invite-management-actions {
+    margin-bottom: 2rem;
+}
+.invite-management-actions p {
+    color: var(--text-secondary);
+    margin-top: 0;
+    margin-bottom: 1rem;
+}
+
+.user-table .status-used {
+    color: var(--text-secondary);
+}
+
+.user-table .status-unused {
+    color: var(--success-border);
+    font-weight: 500;
+}
+
+.user-table .invite-code {
+    font-family: 'Courier New', Courier, monospace;
+    font-weight: 500;
+}
+
+.user-creation-form {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    align-items: end;
+}
+.user-creation-form .form-button-group button {
+    width: 100%;
+}
+.user-table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+.user-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 2rem;
+    min-width: 700px;
+}
+.user-table th,
+.user-table td {
+    border: 1px solid var(--border-color);
+    padding: 12px;
+    text-align: left;
+}
+.user-table th {
+    background-color: #1a1a1a;
+    font-weight: 500;
+}
+.user-table .user-username {
+    font-weight: 500;
+}
+.status-verified {
+    color: #28a745;
+    font-weight: 500;
+}
+.status-unverified {
+    color: var(--accent-orange);
+    font-weight: 500;
+}
+.action-forms {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+.action-forms form {
+    margin: 0;
+}
+.action-forms .btn-secondary,
+.action-forms .delete-btn {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.85rem;
+    width: 80px;
+    box-sizing: border-box;
+}
+.cache-management {
+    margin-top: 2.5rem;
+}
+.cache-management p {
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+    max-width: 60ch;
+}
+
+/* --- Leaderboard Page --- */
+.leaderboard-container > p {
+    color: var(--text-secondary);
+    text-align: center;
+    margin-top: -1.5rem;
+    margin-bottom: 2.5rem;
+}
+.leaderboard-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+}
+.leaderboard-column h3 {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+.leaderboard-table-container {
+    overflow-x: auto;
+}
+.leaderboard-table {
+    width: 100%;
+    min-width: 450px;
+    border-collapse: collapse;
+}
+.leaderboard-table th,
+.leaderboard-table td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+.leaderboard-table th {
+    font-weight: 500;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.leaderboard-table tbody tr:last-child td {
+    border-bottom: none;
+}
+.leaderboard-table .rank-cell {
+    font-weight: 700;
+    font-size: 1.2rem;
+    color: var(--accent-orange);
+    text-align: center;
+}
+.leaderboard-table .numeric-cell {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+@media (min-width: 768px) {
+    .leaderboard-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+/* --- Account/Settings Page --- */
+.chart-container {
+    margin-top: 3rem;
+    padding: 2rem; /* Increased padding */
+    background-color: #0a0a0a; /* Slightly different bg for contrast */
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    text-align: center; /* Center the button */
+}
+
+.chart-container h4 {
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+    font-size: 1.2rem;
+    text-align: left;
+}
+
+.chart-container .chart-description {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-top: 0;
+    margin-bottom: 2rem; /* Increased margin */
+    text-align: left;
+}
+
+.chart-container .chart-actions {
+    margin-top: 1.5rem;
+}
+
+.invite-code-list {
+    list-style: none;
+    padding: 0;
+    margin: 1rem 0;
+}
+
+.invite-code-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #0a0a0a;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    margin-bottom: 0.5rem;
+}
+
+.invite-code {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 1.1rem;
+    color: var(--accent-orange);
+}
+

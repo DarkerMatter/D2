@@ -1,67 +1,154 @@
 // routes/account.js
 const express = require('express');
 const bcrypt = require('bcrypt');
+const { v4: uuidv4 } = require('uuid'); // Import UUID generator
 const db = require('../db');
+const cache = require('../utils/cache');
 const { isAuthenticated } = require('../middleware/auth');
 
 const router = express.Router();
 const saltRounds = 10;
 
-// GET /account - Show account page with overall stats
-router.get('/', isAuthenticated, async (req, res) => {
-    const userId = req.session.user.id;
+// --- GET route for the main account page ---
+// FIX: Now fetches invite codes and checks generation eligibility.
+router.get('/', isAuthenticated, async (req, res, next) => {
     try {
-        // The overall stats are now stored on the user record, so this is very fast.
-        const [userRows] = await db.execute(
-            'SELECT total_rage, total_deaths FROM users WHERE id = ?',
-            [userId]
-        );
-        const userStats = userRows[0];
+        const userId = req.session.user.id;
 
-        // We still need to calculate the overall average and go-to phrase.
-        const [aggRows] = await db.execute(`
-            SELECT
-                COALESCE(AVG(rage_level), 0) AS averageRage,
-                (SELECT rage_phrase FROM rage_logs WHERE user_id = ? GROUP BY rage_phrase ORDER BY COUNT(*) DESC, MAX(created_at) DESC LIMIT 1) AS mostCommonPhrase
-            FROM rage_logs
-            WHERE user_id = ?
-        `, [userId, userId]);
+        // 1. Fetch lifetime stats (unchanged)
+        const [statsRows] = await db.execute('SELECT total_rage, total_deaths FROM users WHERE id = ?', [userId]);
+        const stats = statsRows[0] || { total_rage: 0, total_deaths: 0 };
+        const [avgRageRows] = await db.execute('SELECT AVG(rage_level) as averageRage FROM rage_logs WHERE user_id = ?', [userId]);
+        stats.averageRage = avgRageRows[0]?.averageRage ? parseFloat(avgRageRows[0].averageRage).toFixed(1) : 'N/A';
+        const [phraseRows] = await db.execute(`
+            SELECT rage_phrase as mostCommonPhrase FROM rage_logs WHERE user_id = ?
+            GROUP BY rage_phrase ORDER BY COUNT(rage_phrase) DESC LIMIT 1
+        `, [userId]);
+        stats.mostCommonPhrase = phraseRows[0]?.mostCommonPhrase ?? 'N/A';
 
-        const overallStats = {
-            totalRage: userStats.total_rage || 0,
-            totalDeaths: userStats.total_deaths || 0,
-            averageRage: parseFloat(aggRows[0].averageRage).toFixed(1),
-            mostCommonPhrase: aggRows[0].mostCommonPhrase || 'N/A'
-        };
+        // 2. NEW: Fetch available invite codes
+        const [codes] = await db.execute('SELECT code FROM invite_codes WHERE created_by_user_id = ? AND used_by_user_id IS NULL', [userId]);
 
+        // 3. NEW: Determine if the user can generate a new code
+        let canGenerateCode = false;
+        if (req.session.user.permission_level === 5) {
+            canGenerateCode = true; // Admins can always generate
+        } else {
+            const [lastCode] = await db.execute(
+                'SELECT created_at FROM invite_codes WHERE created_by_user_id = ? ORDER BY created_at DESC LIMIT 1',
+                [userId]
+            );
+            if (lastCode.length === 0) {
+                canGenerateCode = true; // Never generated one before
+            } else {
+                const lastCodeDate = new Date(lastCode[0].created_at);
+                const now = new Date();
+                // Check if the last code was generated in a previous month
+                if (lastCodeDate.getFullYear() < now.getFullYear() || lastCodeDate.getMonth() < now.getMonth()) {
+                    canGenerateCode = true;
+                }
+            }
+        }
+
+        // Renders the account.pug view with the new data
         res.render('account', {
-            user: req.session.user,
-            overallStats,
-            error: req.flash('error'), // Using connect-flash is great for this
-            success: req.flash('success')
+            stats,
+            inviteCodes: codes,
+            canGenerateCode
         });
-
     } catch (error) {
-        console.error('Error fetching account stats:', error);
-        res.status(500).send('Server error.');
+        next(error);
     }
 });
 
-// POST /account/change-password (move logic from old routes file)
+// --- NEW: Route to generate an invite code ---
+router.post('/generate-invite', isAuthenticated, async (req, res, next) => {
+    const userId = req.session.user.id;
+    const userPerms = req.session.user.permission_level;
+
+    try {
+        // Server-side check to enforce generation rules
+        if (userPerms !== 5) {
+            const [lastCode] = await db.execute(
+                'SELECT created_at FROM invite_codes WHERE created_by_user_id = ? ORDER BY created_at DESC LIMIT 1',
+                [userId]
+            );
+            if (lastCode.length > 0) {
+                const lastCodeDate = new Date(lastCode[0].created_at);
+                const now = new Date();
+                if (lastCodeDate.getFullYear() === now.getFullYear() && lastCodeDate.getMonth() === now.getMonth()) {
+                    req.flash('error', 'You have already generated an invite code this month.');
+                    return res.redirect('/account');
+                }
+            }
+        }
+
+        const newCode = uuidv4();
+        await db.execute(
+            'INSERT INTO invite_codes (code, created_by_user_id) VALUES (?, ?)',
+            [newCode, userId]
+        );
+        req.flash('success', 'New invite code generated successfully!');
+        res.redirect('/account');
+
+    } catch (error) {
+        next(error);
+    }
+});
+
+
+// --- (The rest of the file remains the same) ---
+// Dedicated route to fetch chart data on-demand
+router.get('/analytics/rage-progression', isAuthenticated, async (req, res, next) => {
+    try {
+        const userId = req.session.user.id;
+        const [chartRows] = await db.execute(`
+            WITH NumberedDeaths AS (
+                SELECT
+                    rage_level,
+                    ROW_NUMBER() OVER(PARTITION BY session_id ORDER BY created_at ASC) as death_number
+                FROM rage_logs
+                WHERE user_id = ?
+            )
+            SELECT
+                death_number,
+                AVG(rage_level) as average_rage
+            FROM NumberedDeaths
+            GROUP BY death_number
+            ORDER BY death_number ASC
+            LIMIT 50;
+        `, [userId]);
+        res.json(chartRows); // Send data as JSON
+    } catch (error) {
+        console.error('Error fetching chart data:', error);
+        res.status(500).json({ message: 'Failed to fetch chart data.' });
+    }
+});
+
+// Route to handle password changes
 router.post('/change-password', isAuthenticated, async (req, res) => {
-    const { currentPassword, newPassword } = req.body;
+    const { currentPassword, newPassword, confirmPassword } = req.body;
     const userId = req.session.user.id;
 
-    if (!currentPassword || !newPassword || newPassword.length < 8) {
-        req.flash('error', 'All fields are required and new password must be at least 8 characters.');
+    if (!currentPassword || !newPassword || !confirmPassword) {
+        req.flash('error', 'All password fields are required.');
+        return res.redirect('/account');
+    }
+    if (newPassword !== confirmPassword) {
+        req.flash('error', 'New passwords do not match.');
+        return res.redirect('/account');
+    }
+    if (newPassword.length < 8) {
+        req.flash('error', 'New password must be at least 8 characters long.');
         return res.redirect('/account');
     }
 
     try {
-        const [rows] = await db.execute('SELECT password FROM users WHERE id = ?', [userId]);
-        const match = await bcrypt.compare(currentPassword, rows[0].password);
+        const [userRows] = await db.execute('SELECT password FROM users WHERE id = ?', [userId]);
+        const user = userRows[0];
 
-        if (!match) {
+        const isPasswordMatch = await bcrypt.compare(currentPassword, user.password);
+        if (!isPasswordMatch) {
             req.flash('error', 'Incorrect current password.');
             return res.redirect('/account');
         }
@@ -71,64 +158,92 @@ router.post('/change-password', isAuthenticated, async (req, res) => {
 
         req.flash('success', 'Password changed successfully.');
         res.redirect('/account');
+
     } catch (error) {
         console.error('Password change error:', error);
-        req.flash('error', 'A server error occurred.');
+        req.flash('error', 'A server error occurred while changing your password.');
         res.redirect('/account');
     }
 });
 
-// POST /account/delete-history (move and update logic)
-router.post('/delete-history', isAuthenticated, async (req, res) => {
+// POST /account/change-email - Allows a user to change their email
+router.post('/change-email', isAuthenticated, async (req, res) => {
+    const { newEmail, currentPassword } = req.body;
     const userId = req.session.user.id;
+
+    if (!newEmail || !/^\S+@\S+\.\S+$/.test(newEmail)) {
+        req.flash('error', 'Please provide a valid email address.');
+        return res.redirect('/account');
+    }
+
     let connection;
     try {
         connection = await db.getConnection();
-        await connection.beginTransaction();
+        // 1. Verify the user's current password for security
+        const [userRows] = await connection.execute('SELECT password FROM users WHERE id = ?', [userId]);
+        const user = userRows[0];
+        const isPasswordMatch = await bcrypt.compare(currentPassword, user.password);
 
-        // 1. Delete all rage logs for the user
-        await connection.execute('DELETE FROM rage_logs WHERE user_id = ?', [userId]);
-        // 2. Delete all sessions for the user
-        await connection.execute('DELETE FROM sessions WHERE user_id = ?', [userId]);
-        // 3. Reset the counters in the users table
-        await connection.execute('UPDATE users SET total_rage = 0, total_deaths = 0 WHERE id = ?', [userId]);
+        if (!isPasswordMatch) {
+            req.flash('error', 'Incorrect password. Email not changed.');
+            return res.redirect('/account');
+        }
 
-        await connection.commit();
-        req.flash('success', 'Your entire account history has been deleted.');
+        // 2. Check if the new email is already in use by another account
+        const [existingEmail] = await connection.execute('SELECT id FROM users WHERE email = ? AND id != ?', [newEmail, userId]);
+        if (existingEmail.length > 0) {
+            req.flash('error', 'That email address is already in use.');
+            return res.redirect('/account');
+        }
+
+        // 3. Update the email. Since email is optional, we don't need to re-verify.
+        await connection.execute(
+            'UPDATE users SET email = ? WHERE id = ?',
+            [newEmail, userId]
+        );
+
+        req.flash('success', 'Email updated successfully.');
         res.redirect('/account');
+
     } catch (error) {
-        if (connection) await connection.rollback();
-        console.error('Delete history error:', error);
-        req.flash('error', 'A server error occurred while deleting your history.');
+        console.error('Error changing email:', error);
+        req.flash('error', 'A server error occurred while changing your email.');
         res.redirect('/account');
     } finally {
         if (connection) connection.release();
     }
 });
 
-
-// NEW: API endpoint to provide data for the rage phrase chart
-router.get('/chart-data', isAuthenticated, async (req, res) => {
+// POST /account/clear-data - Deletes all of a user's session data
+router.post('/clear-data', isAuthenticated, async (req, res) => {
     const userId = req.session.user.id;
+    let connection;
     try {
-        const [rows] = await db.execute(`
-            SELECT rage_phrase, COUNT(*) as phrase_count
-            FROM rage_logs
-            WHERE user_id = ?
-            GROUP BY rage_phrase
-            ORDER BY phrase_count DESC
-            LIMIT 5
-        `, [userId]);
+        connection = await db.getConnection();
+        await connection.beginTransaction();
 
-        // Format the data for Chart.js
-        const labels = rows.map(row => row.rage_phrase);
-        const data = rows.map(row => row.phrase_count);
+        // 1. Delete all sessions owned by the user.
+        await connection.execute('DELETE FROM sessions WHERE user_id = ?', [userId]);
 
-        res.json({ labels, data });
+        // 2. Reset the user's aggregate stats on the users table.
+        await connection.execute('UPDATE users SET total_rage = 0, total_deaths = 0 WHERE id = ?', [userId]);
+
+        await connection.commit();
+
+        // 3. Clear the cache since this user's stats are now gone
+        cache.clear();
+        console.log('[Cache] Purged cache due to user data deletion.');
+
+        req.flash('success', 'All of your session data has been successfully deleted.');
+        res.redirect('/account');
 
     } catch (error) {
-        console.error('Error fetching chart data:', error);
-        res.status(500).json({ error: 'Failed to fetch chart data' });
+        if (connection) await connection.rollback();
+        console.error('Error clearing user data:', error);
+        req.flash('error', 'A server error occurred while clearing your data.');
+        res.redirect('/account');
+    } finally {
+        if (connection) connection.release();
     }
 });
 

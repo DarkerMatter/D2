@@ -5,7 +5,10 @@ services:
     build: .
     container_name: d2-rage-counter-app
     restart: unless-stopped
-    # FIX: Connect the app to both the internal d2-network and the external mysql_network
+    # --- FIX: Explicitly set the environment to production ---
+    environment:
+      - NODE_ENV=production
+    # ---------------------------------------------------------
     networks:
       - d2-network
       - mysql_network
@@ -23,7 +26,6 @@ services:
       - ./nginx/conf.d:/etc/nginx/conf.d
       - ./data/certbot/www:/var/www/certbot
       - ./data/certbot/conf:/etc/letsencrypt
-    # FIX: Use the correct network and dependency
     networks:
       - d2-network
     depends_on:
@@ -35,15 +37,12 @@ services:
     volumes:
       - ./data/certbot/www:/var/www/certbot
       - ./data/certbot/conf:/etc/letsencrypt
-    # FIX: Add certbot to the network so docker-compose can run it
     networks:
       - d2-network
     command: renew
 
 networks:
-  # This network is for communication between our app and nginx
   d2-network:
     driver: bridge
-  # Define the external network so our app can connect to it
   mysql_network:
     external: true
