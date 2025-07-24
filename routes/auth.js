@@ -101,6 +101,10 @@ router.post('/login', async (req, res) => {
             req.flash('error', 'You must verify your email address before you can log in.');
             return res.redirect('/login');
         }
+        if (user.permission_level === 0) {
+            req.flash('error', 'This account has been suspended.');
+            return res.redirect('/login');
+        }
 
         const match = await bcrypt.compare(password, user.password);
         if (match) {
@@ -109,15 +113,26 @@ router.post('/login', async (req, res) => {
                 username: user.username,
                 permission_level: user.permission_level
             };
-            res.redirect('/dashboard');
+            // Use a callback with session.save to prevent race conditions on redirect
+            req.session.save((err) => {
+                if (err) {
+                    // Handle session save error
+                    console.error('Session save error:', err);
+                    req.flash('error', 'Could not log you in. Please try again.');
+                    return res.redirect('/login');
+                }
+                res.redirect('/dashboard');
+            });
         } else {
             req.flash('error', 'Invalid username or password.');
             res.redirect('/login');
         }
-    } catch (error)
-    console.error('Login error:', error);
-    res.status(500).send('Server error.');
-}
+        // --- FIX: Corrected the try...catch block syntax ---
+    } catch (error) {
+        console.error('Login error:', error);
+        req.flash('error', 'A server error occurred. Please try again.');
+        res.redirect('/login');
+    }
 });
 
 router.get('/logout', (req, res) => {

@@ -40,6 +40,13 @@ html(lang="en")
             li
               a(href="/login") Login
       main
+        //- --- FIX: Add this block to display flash messages ---
+        if success && success.length > 0
+          .success= success
+        if error && error.length > 0
+          .error= error
+        //- --- End of fix ---
+
         block content
       footer
         //- Updated Footer with Links

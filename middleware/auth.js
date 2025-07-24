@@ -1,63 +1,78 @@
 // middleware/auth.js
-const db = require('../db'); // Import the database connection
+const db = require('../db'); // We need the database connection here
 
 /**
- * Checks if a user is authenticated. On every request, it re-fetches the user's
- * data from the database to ensure permissions are always up-to-date.
+ * Middleware to ensure a user is authenticated and their account is active.
+ * This function performs a live check against the database on every request
+ * to a protected route, ensuring that status changes (like bans) are
+ * reflected immediately.
  */
 async function isAuthenticated(req, res, next) {
-    // 1. Check if a user session exists at all
-    if (!req.session.user) {
+    // 1. Check if a user ID exists in the session
+    if (!req.session.user || !req.session.user.id) {
+        req.flash('error', 'You must be logged in to view this page.');
         return res.redirect('/login');
     }
 
     try {
-        // 2. Re-fetch the user from the DB using the ID from the session
+        // 2. Fetch the latest user data from the database
         const [rows] = await db.execute('SELECT id, username, permission_level FROM users WHERE id = ?', [req.session.user.id]);
-        const currentUser = rows[0];
 
-        // 3. Handle cases where the user was deleted from the DB while logged in
-        if (!currentUser) {
-            return req.session.destroy(() => {
+        // 3. Check if the user still exists (they might have been deleted)
+        if (rows.length === 0) {
+            // FIX: Set flash message, then clear user data from the session and save.
+            // This preserves the session just long enough to show the flash message.
+            req.flash('error', 'Your account could not be found.');
+            req.session.user = null;
+            return req.session.save(err => {
+                if (err) return next(err); // Pass error to Express
                 res.redirect('/login');
             });
         }
 
-        // 4. THIS IS THE "KICK" LOGIC: If permission is 0, they are banned.
-        if (currentUser.permission_level === 0) {
-            return req.session.destroy(() => {
-                res.status(403).render('error', {
-                    title: 'Access Denied',
-                    message: 'Forbidden: Your account has been suspended.'
-                });
+        const user = rows[0];
+
+        // 4. Check if the user has been banned
+        if (user.permission_level === 0) {
+            // FIX: Same logic as above for banned users.
+            req.flash('error', 'Your account has been suspended.');
+            req.session.user = null;
+            return req.session.save(err => {
+                if (err) return next(err); // Pass error to Express
+                res.redirect('/login');
             });
         }
 
-        // 5. Keep the session and res.locals fresh with the latest data from the DB
-        req.session.user = currentUser;
-        res.locals.user = currentUser;
+        // 5. User is valid and active. Refresh session data and proceed.
+        req.session.user = {
+            id: user.id,
+            username: user.username,
+            permission_level: user.permission_level
+        };
 
-        return next(); // User is valid, proceed to the requested route
+        // Also attach user to the request object for easy access in routes
+        req.user = user;
+
+        return next();
 
     } catch (error) {
-        console.error("Error in isAuthenticated middleware:", error);
-        return res.status(500).send("Server error during authentication check.");
+        console.error('Authentication middleware error:', error);
+        req.flash('error', 'A server error occurred. Please try again.');
+        return res.redirect('/login');
     }
 }
 
 /**
- * Checks if the current user is an admin.
- * This should always run *after* isAuthenticated.
+ * Middleware to ensure a user is an administrator.
+ * This should always be used *after* isAuthenticated.
  */
 function isAdmin(req, res, next) {
-    // isAuthenticated has already run, so we know req.session.user is fresh and valid.
-    if (req.session.user.permission_level === 5) {
+    // This check is now more reliable because isAuthenticated has refreshed the session
+    if (req.session.user && req.session.user.permission_level === 5) {
         return next();
     }
-    res.status(403).render('error', {
-        title: 'Access Denied',
-        message: 'Forbidden: You do not have access to this page.'
-    });
+    req.flash('error', 'You do not have permission to access this resource.');
+    res.redirect('/dashboard');
 }
 
 module.exports = { isAuthenticated, isAdmin };

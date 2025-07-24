@@ -2,53 +2,63 @@ extends layout
 
 block content
     .admin-container
-        h2 Admin Panel - User Management
+        h2 Admin Panel
 
-        if error
-            p.error= error
-        if success
-            p.success= success
-
-        .user-creation-form
+        //- Section for creating a new user
+        .form-container.user-creation-form
             h3 Create New User
             form(action="/admin/create-user", method="POST")
-                input(type="text", name="username", placeholder="Username", required)
-                input(type="password", name="password", placeholder="Password", required)
-                select(name="permission_level", required)
-                    option(value="1") User (Level 1)
-                    option(value="5") Admin (Level 5)
-                    //- Add Banned option
-                    option(value="0") Banned (Level 0)
-                button(type="submit") Create User
+                .form-grid
+                    .form-group
+                        label(for="username") Username
+                        input#username(type="text", name="username", required)
+                    .form-group
+                        label(for="email") Email
+                        input#email(type="email", name="email", required)
+                    .form-group
+                        label(for="password") Password
+                        input#password(type="password", name="password", required)
+                    .form-group
+                        label(for="permission_level") Permission Level
+                        select#permission_level(name="permission_level", required)
+                            option(value="1" selected) User
+                            option(value="5") Admin
+                button.btn-primary(type="submit") Create User
 
-        h3 Existing Users
-        table.user-table
-            thead
-                tr
-                    th ID
-                    th Username
-                    th Permission
-                    th Total Rage
-                    th Actions
-            tbody
-                each u in users
+        //- Section for managing existing users
+        h3 Manage Users
+        .user-table-container
+            table.user-table
+                thead
                     tr
-                        td= u.id
-                        td= u.username
-                        td= u.permission_level
-                        td= u.total_rage
-                        td
-                            if u.id !== user.id
-                                //-- START of updated block --//
+                        th Username
+                        th Email
+                        th Status
+                        th Permissions
+                        th Actions
+                tbody
+                    each listUser in users
+                        tr
+                            td= listUser.username
+                            td= listUser.email
+                            td
+                                if listUser.email_verified_at
+                                    span.status-verified ✔ Verified
+                                else
+                                    span.status-unverified ✖ Unverified
+                            td
+                                form.edit-user-form(action=`/admin/edit-user/${listUser.id}`, method="POST")
+                                    select(name="permission_level", onchange="this.form.submit()", disabled=listUser.id === user.id)
+                                        option(value="0", selected=listUser.permission_level === 0) Banned
+                                        option(value="1", selected=listUser.permission_level === 1) User
+                                        option(value="5", selected=listUser.permission_level === 5) Admin
+                            td
                                 .action-forms
-                                    form.edit-user-form(action=`/admin/edit-user/${u.id}`, method="POST")
-                                        select(name="permission_level")
-                                            option(value="5", selected=u.permission_level === 5) Admin
-                                            option(value="1", selected=u.permission_level === 1) User
-                                            option(value="0", selected=u.permission_level === 0) Banned
-                                        button(type="submit") Update
-                                    form(action=`/admin/delete-user/${u.id}`, method="POST", onsubmit="return confirm('Are you sure you want to delete this user?');")
-                                        button.delete-btn(type="submit") Delete
-                                //-- END of updated block --//
-                            else
-                                | (You)
+                                    //- Show verify button only if user is not verified and it's not the current admin
+                                    if !listUser.email_verified_at && listUser.id !== user.id
+                                        form(action=`/admin/verify-user/${listUser.id}`, method="POST")
+                                            button.btn-secondary(type="submit") Verify
+                                    //- Prevent admin from deleting themselves
+                                    if listUser.id !== user.id
+                                        form(action=`/admin/delete-user/${listUser.id}`, method="POST", onsubmit="return confirm('Are you sure you want to delete this user? This action cannot be undone.');")
+                                            button.delete-btn(type="submit") Delete
