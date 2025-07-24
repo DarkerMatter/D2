@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  app:
+    # Build the image from the Dockerfile in the current directory
+    build: .
+    # A friendly name for your container
+    container_name: d2-rage-counter-app
+    # Always restart the container unless it is explicitly stopped.
+    restart: unless-stopped
+    # Map port 3000 on the VPS to port 3000 in the container
+    ports:
+      - "3000:3000"
+    # Pass in your environment variables here.
+    # These override any .env file.
+    environment:
+      - NODE_ENV=production
+      - SESSION_SECRET=your-very-strong-and-long-random-secret-for-production # IMPORTANT: Change this!
+      - DB_HOST=your_db_container_name # e.g., mysql-db
+      - DB_USER=your_db_user
+      - DB_PASSWORD=your_db_password
+      - DB_NAME=your_db_name
+      - DB_PORT=3306
+    # Connect this container to the same network as your database container
+    networks:
+      - your_shared_network_name
+
+# Define the external network that your database container is already using
+networks:
+  your_shared_network_name:
+    external: true
