@@ -1,15 +1,18 @@
 #!/bin/bash
-# FIX: Exit immediately if a command exits with a non-zero status.
+# Exit immediately if a command exits with a non-zero status.
 set -e
 
-# Check if .env file exists
-if [ ! -f .env ]; then
+# --- FIX: Use a robust method to load environment variables ---
+if [ -f .env ]; then
+  # This tells the shell to automatically export all variables that are set.
+  set -a
+  source .env
+  # This stops the automatic export.
+  set +a
+else
   echo "Error: .env file not found. Please create one and fill in your details."
   exit 1
 fi
-
-# Load environment variables from .env file
-export $(grep -v '^#' .env | xargs)
 
 # Check if DOMAIN_NAME is set
 if [ -z "${DOMAIN_NAME}" ]; then
@@ -51,7 +54,6 @@ if [ ! -e "$data_path/conf/options-ssl-nginx.conf" ] || [ ! -e "$data_path/conf/
 fi
 
 echo "### Creating dummy certificate for ${DOMAIN_NAME} ..."
-# FIX: Use the domain name variable directly for clarity
 path="/etc/letsencrypt/live/${DOMAIN_NAME}"
 mkdir -p "$data_path/conf/live/${DOMAIN_NAME}"
 docker-compose run --rm --entrypoint "\
