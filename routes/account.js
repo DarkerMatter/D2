@@ -166,53 +166,6 @@ router.post('/change-password', isAuthenticated, async (req, res) => {
     }
 });
 
-// POST /account/change-email - Allows a user to change their email
-router.post('/change-email', isAuthenticated, async (req, res) => {
-    const { newEmail, currentPassword } = req.body;
-    const userId = req.session.user.id;
-
-    if (!newEmail || !/^\S+@\S+\.\S+$/.test(newEmail)) {
-        req.flash('error', 'Please provide a valid email address.');
-        return res.redirect('/account');
-    }
-
-    let connection;
-    try {
-        connection = await db.getConnection();
-        // 1. Verify the user's current password for security
-        const [userRows] = await connection.execute('SELECT password FROM users WHERE id = ?', [userId]);
-        const user = userRows[0];
-        const isPasswordMatch = await bcrypt.compare(currentPassword, user.password);
-
-        if (!isPasswordMatch) {
-            req.flash('error', 'Incorrect password. Email not changed.');
-            return res.redirect('/account');
-        }
-
-        // 2. Check if the new email is already in use by another account
-        const [existingEmail] = await connection.execute('SELECT id FROM users WHERE email = ? AND id != ?', [newEmail, userId]);
-        if (existingEmail.length > 0) {
-            req.flash('error', 'That email address is already in use.');
-            return res.redirect('/account');
-        }
-
-        // 3. Update the email. Since email is optional, we don't need to re-verify.
-        await connection.execute(
-            'UPDATE users SET email = ? WHERE id = ?',
-            [newEmail, userId]
-        );
-
-        req.flash('success', 'Email updated successfully.');
-        res.redirect('/account');
-
-    } catch (error) {
-        console.error('Error changing email:', error);
-        req.flash('error', 'A server error occurred while changing your email.');
-        res.redirect('/account');
-    } finally {
-        if (connection) connection.release();
-    }
-});
 
 // POST /account/clear-data - Deletes all of a user's session data
 router.post('/clear-data', isAuthenticated, async (req, res) => {

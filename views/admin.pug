@@ -4,13 +4,37 @@ block content
     .admin-container
         h2 Admin Panel
 
+        //- NEW: Server Health & Metrics Section
+        .admin-section-card
+            h3 Server Health & Metrics
+            .metrics-grid
+                .metric-item
+                    h4 App CPU Usage
+                    .progress-bar
+                        .progress-bar-inner(style=`width: ${serverMetrics.cpu.load}%`)
+                    p.metric-value #{serverMetrics.cpu.load}%
+                .metric-item
+                    h4 App RAM Usage
+                    p.metric-value.large-text= serverMetrics.ram.used
+                .metric-item
+                    h4 Server Uptime
+                    p.metric-value.large-text= serverMetrics.uptime
+                //- FIX: Updated DB Connections card
+                .metric-item
+                    h4 DB Connections
+                    .progress-bar
+                        .progress-bar-inner(style=`width: ${serverMetrics.db.percent}%`)
+                    p.metric-value #{serverMetrics.db.connections} / #{serverMetrics.db.maxConnections}
+                .metric-item
+                    h4 Database Size
+                    p.metric-value.large-text= serverMetrics.db.size
+
         .admin-section-card
             h3 Create New User
             form.user-creation-form(action="/admin/create-user", method="POST")
                 .form-group
                     label(for="username") Username
                     input#username(type="text", name="username", required)
-                //- FIX: Email field removed
                 .form-group
                     label(for="password") Password
                     input#password(type="password", name="password", required)
@@ -29,14 +53,12 @@ block content
                     thead
                         tr
                             th Username
-                            //- FIX: Removed Email column
                             th Permissions
                             th Actions
                     tbody
                         each listUser in users
                             tr
                                 td.user-username= listUser.username
-                                //- FIX: Removed Email column content
                                 td
                                     form.edit-user-form(action=`/admin/edit-user/${listUser.id}`, method="POST")
                                         select(name="permission_level", onchange="this.form.submit()", disabled=listUser.id === user.id)
@@ -54,7 +76,6 @@ block content
                                             )
                                                 button.delete-btn(type="submit") Delete
 
-        //- NEW: Invite Code Management Section
         .admin-section-card
             h3 Invite Code Management
             .invite-management-actions

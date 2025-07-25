@@ -66,18 +66,6 @@ block content
                 input#confirmPassword(type="password", name="confirmPassword", required)
             button.btn-primary(type="submit") Update Password
 
-    //- Card for changing email
-    .form-container
-        form(action="/account/change-email", method="POST")
-            h3 Change Email Address
-            .form-group
-                label(for="newEmail") New Email Address
-                input#newEmail(type="email", name="newEmail", required, value=user.email)
-            .form-group
-                label(for="emailConfirmPassword") Current Password (for verification)
-                input#emailConfirmPassword(type="password", name="currentPassword", required, placeholder="Enter your password to confirm")
-            button.btn-primary(type="submit") Update Email
-
     //- Danger Zone for clearing data
     .danger-zone
         h3 Clear All Session Data

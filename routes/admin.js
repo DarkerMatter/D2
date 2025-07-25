@@ -1,39 +1,99 @@
 // routes/admin.js
 const express = require('express');
 const bcrypt = require('bcrypt');
-const { v4: uuidv4 } = require('uuid'); // Import UUID
+const { v4: uuidv4 } = require('uuid');
 const db = require('../db');
 const { isAuthenticated, isAdmin } = require('../middleware/auth');
 const cache = require('../utils/cache');
+const si = require('systeminformation');
 
 const router = express.Router();
 const saltRounds = 10;
 
+// --- Helper Functions for Formatting ---
+function formatUptime(seconds) {
+    const d = Math.floor(seconds / (3600 * 24));
+    const h = Math.floor((seconds % (3600 * 24)) / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    return `${d}d ${h}h ${m}m`;
+}
+
+function formatBytes(bytes, decimals = 2) {
+    if (!+bytes) return '0 Bytes';
+    const k = 1024;
+    const dm = decimals < 0 ? 0 : decimals;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
+}
+
 // Protect all admin routes
 router.use(isAuthenticated, isAdmin);
 
-// GET /admin - Show admin panel with user list and invite codes
+// GET /admin - Show admin panel with users, invites, and server metrics
 router.get('/', async (req, res, next) => {
     try {
-        // Fetch all users (without email)
-        const [users] = await db.execute('SELECT id, username, permission_level FROM users ORDER BY created_at DESC');
+        // Parallelize data fetching for better performance
+        const [
+            users,
+            invites,
+            processes,
+            uptime,
+            dbConnections,
+            dbMaxConnections,
+            dbSizeRows
+        ] = await Promise.all([
+            db.execute('SELECT id, username, permission_level FROM users ORDER BY created_at DESC'),
+            db.execute(`
+                SELECT ic.id, ic.code, ic.created_at, ic.used_at,
+                       creator.username as creator_username, used_by.username as used_by_username
+                FROM invite_codes ic
+                         JOIN users creator ON ic.created_by_user_id = creator.id
+                         LEFT JOIN users used_by ON ic.used_by_user_id = used_by.id
+                ORDER BY ic.created_at DESC
+            `),
+            si.processes(),
+            si.time(),
+            db.execute("SHOW STATUS LIKE 'Threads_connected'"),
+            db.execute("SHOW VARIABLES LIKE 'max_connections'"),
+            db.execute(
+                'SELECT table_schema AS "db_name", ROUND(SUM(data_length + index_length), 2) AS "size_bytes" FROM information_schema.TABLES WHERE table_schema = ? GROUP BY table_schema;',
+                [process.env.DB_NAME]
+            )
+        ]);
 
-        // Fetch all invite codes with creator and user info
-        const [invites] = await db.execute(`
-            SELECT
-                ic.id,
-                ic.code,
-                ic.created_at,
-                ic.used_at,
-                creator.username as creator_username,
-                used_by.username as used_by_username
-            FROM invite_codes ic
-            JOIN users creator ON ic.created_by_user_id = creator.id
-            LEFT JOIN users used_by ON ic.used_by_user_id = used_by.id
-            ORDER BY ic.created_at DESC
-        `);
+        // Find the current process by its PID to get its specific stats
+        const mainProcess = processes.list.find(p => p.pid === process.pid);
 
-        res.render('admin', { users, invites });
+        // Assemble the server metrics object
+        const serverMetrics = {
+            cpu: {
+                // FIX: Add a check to ensure mainProcess.pcpu is a valid number before calling toFixed()
+                load: (mainProcess && typeof mainProcess.pcpu === 'number') ? mainProcess.pcpu.toFixed(2) : '0.00'
+            },
+            ram: {
+                // mem_rss is in KB, so multiply by 1024 for bytes
+                used: mainProcess ? formatBytes(mainProcess.mem_rss * 1024) : 'N/A'
+            },
+            db: {
+                connections: dbConnections[0][0]?.Value || '0',
+                maxConnections: dbMaxConnections[0][0]?.Value || '0',
+                size: dbSizeRows[0][0] ? formatBytes(dbSizeRows[0][0].size_bytes) : 'N/A'
+            },
+            uptime: formatUptime(uptime.uptime)
+        };
+
+        // Add a calculated percentage for DB connections
+        const currentConns = parseInt(serverMetrics.db.connections, 10);
+        const maxConns = parseInt(serverMetrics.db.maxConnections, 10);
+        serverMetrics.db.percent = (maxConns > 0) ? ((currentConns / maxConns) * 100).toFixed(2) : 0;
+
+
+        res.render('admin', {
+            users: users[0],
+            invites: invites[0],
+            serverMetrics
+        });
     } catch (error) {
         next(error);
     }
@@ -41,7 +101,6 @@ router.get('/', async (req, res, next) => {
 
 // POST /admin/create-user
 router.post('/create-user', async (req, res) => {
-    // FIX: Email field completely removed
     const { username, password, permission_level } = req.body;
 
     if (!username || !password || !permission_level) {
@@ -57,7 +116,6 @@ router.post('/create-user', async (req, res) => {
         }
 
         const hashedPassword = await bcrypt.hash(password, saltRounds);
-        // FIX: INSERT query no longer includes email
         await db.execute(
             'INSERT INTO users (username, password, permission_level) VALUES (?, ?, ?)',
             [username, hashedPassword, parseInt(permission_level, 10)]
@@ -71,7 +129,7 @@ router.post('/create-user', async (req, res) => {
     }
 });
 
-// NEW: POST /admin/generate-invite
+// POST /admin/generate-invite
 router.post('/generate-invite', async (req, res) => {
     const adminUserId = req.session.user.id;
     try {
@@ -89,7 +147,7 @@ router.post('/generate-invite', async (req, res) => {
     }
 });
 
-// NEW: POST /admin/delete-invite/:id
+// POST /admin/delete-invite/:id
 router.post('/delete-invite/:id', async (req, res) => {
     const inviteId = req.params.id;
     try {
