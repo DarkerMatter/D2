@@ -1,43 +1,56 @@
 // routes/account.js
 const express = require('express');
 const bcrypt = require('bcrypt');
-const { v4: uuidv4 } = require('uuid'); // Import UUID generator
+const { v4: uuidv4 } = require('uuid');
 const db = require('../db');
 const cache = require('../utils/cache');
 const { isAuthenticated } = require('../middleware/auth');
+const achievementService = require('../services/achievementService');
 
 const router = express.Router();
 const saltRounds = 10;
 
-// --- GET route for the main account page ---
-// FIX: Now fetches invite codes and checks generation eligibility.
+// GET route for the main account page
 router.get('/', isAuthenticated, async (req, res, next) => {
     try {
         const userId = req.session.user.id;
 
-        // 1. Fetch lifetime stats (unchanged)
-        const [statsRows] = await db.execute('SELECT total_rage, total_deaths FROM users WHERE id = ?', [userId]);
-        const stats = statsRows[0] || { total_rage: 0, total_deaths: 0 };
-        const [avgRageRows] = await db.execute('SELECT AVG(rage_level) as averageRage FROM rage_logs WHERE user_id = ?', [userId]);
-        stats.averageRage = avgRageRows[0]?.averageRage ? parseFloat(avgRageRows[0].averageRage).toFixed(1) : 'N/A';
-        const [phraseRows] = await db.execute(`
-            SELECT rage_phrase as mostCommonPhrase FROM rage_logs WHERE user_id = ?
-            GROUP BY rage_phrase ORDER BY COUNT(rage_phrase) DESC LIMIT 1
-        `, [userId]);
-        stats.mostCommonPhrase = phraseRows[0]?.mostCommonPhrase ?? 'N/A';
+        // Parallelize all data fetching for maximum efficiency
+        const [
+            statsResults,
+            avgRageResults,
+            phraseResults,
+            codesResults,
+            lastCodeResults,
+            allAchievementsResults,
+            userAchievementsResults
+        ] = await Promise.all([
+            db.execute('SELECT total_rage, total_deaths FROM users WHERE id = ?', [userId]),
+            db.execute('SELECT AVG(rage_level) as averageRage FROM rage_logs WHERE user_id = ?', [userId]),
+            db.execute(`
+                SELECT rage_phrase as mostCommonPhrase FROM rage_logs WHERE user_id = ?
+                GROUP BY rage_phrase ORDER BY COUNT(rage_phrase) DESC LIMIT 1
+            `, [userId]),
+            db.execute('SELECT code FROM invite_codes WHERE created_by_user_id = ? AND used_by_user_id IS NULL', [userId]),
+            db.execute('SELECT created_at FROM invite_codes WHERE created_by_user_id = ? ORDER BY created_at DESC LIMIT 1', [userId]),
+            db.execute('SELECT id, name, description, icon FROM achievements ORDER BY id'),
+            db.execute('SELECT achievement_id, earned_at FROM user_achievements WHERE user_id = ?', [userId]),
+        ]);
 
-        // 2. NEW: Fetch available invite codes
-        const [codes] = await db.execute('SELECT code FROM invite_codes WHERE created_by_user_id = ? AND used_by_user_id IS NULL', [userId]);
+        // 1. Process lifetime stats from the parallel queries
+        const stats = statsResults[0][0] || { total_rage: 0, total_deaths: 0 };
+        stats.averageRage = avgRageResults[0][0]?.averageRage ? parseFloat(avgRageResults[0][0].averageRage).toFixed(1) : 'N/A';
+        stats.mostCommonPhrase = phraseResults[0][0]?.mostCommonPhrase ?? 'N/A';
 
-        // 3. NEW: Determine if the user can generate a new code
+        // 2. Process invite codes from parallel queries.
+        const inviteCodes = codesResults[0];
+
+        // 3. Determine if the user can generate a new code using data from parallel queries.
         let canGenerateCode = false;
         if (req.session.user.permission_level === 5) {
             canGenerateCode = true; // Admins can always generate
         } else {
-            const [lastCode] = await db.execute(
-                'SELECT created_at FROM invite_codes WHERE created_by_user_id = ? ORDER BY created_at DESC LIMIT 1',
-                [userId]
-            );
+            const lastCode = lastCodeResults[0];
             if (lastCode.length === 0) {
                 canGenerateCode = true; // Never generated one before
             } else {
@@ -50,18 +63,24 @@ router.get('/', isAuthenticated, async (req, res, next) => {
             }
         }
 
-        // Renders the account.pug view with the new data
+        // 4. Map earned achievements for easy lookup in the view
+        const userAchievements = userAchievementsResults[0];
+        const earnedAchievements = new Map(userAchievements.map(a => [a.achievement_id, a.earned_at]));
+
+        // Renders the account.pug view with all the processed data
         res.render('account', {
             stats,
-            inviteCodes: codes,
-            canGenerateCode
+            inviteCodes,
+            canGenerateCode,
+            achievements: allAchievementsResults[0],
+            earnedAchievements
         });
     } catch (error) {
         next(error);
     }
 });
 
-// --- NEW: Route to generate an invite code ---
+// Route to generate an invite code
 router.post('/generate-invite', isAuthenticated, async (req, res, next) => {
     const userId = req.session.user.id;
     const userPerms = req.session.user.permission_level;
@@ -88,6 +107,7 @@ router.post('/generate-invite', isAuthenticated, async (req, res, next) => {
             'INSERT INTO invite_codes (code, created_by_user_id) VALUES (?, ?)',
             [newCode, userId]
         );
+        await achievementService.grantAchievement(req, userId, 6);
         req.flash('success', 'New invite code generated successfully!');
         res.redirect('/account');
 
@@ -96,8 +116,6 @@ router.post('/generate-invite', isAuthenticated, async (req, res, next) => {
     }
 });
 
-
-// --- (The rest of the file remains the same) ---
 // Dedicated route to fetch chart data on-demand
 router.get('/analytics/rage-progression', isAuthenticated, async (req, res, next) => {
     try {
@@ -116,7 +134,7 @@ router.get('/analytics/rage-progression', isAuthenticated, async (req, res, next
             FROM NumberedDeaths
             GROUP BY death_number
             ORDER BY death_number ASC
-            LIMIT 50;
+                LIMIT 50;
         `, [userId]);
         res.json(chartRows); // Send data as JSON
     } catch (error) {
@@ -165,7 +183,6 @@ router.post('/change-password', isAuthenticated, async (req, res) => {
         res.redirect('/account');
     }
 });
-
 
 // POST /account/clear-data - Deletes all of a user's session data
 router.post('/clear-data', isAuthenticated, async (req, res) => {

@@ -41,12 +41,19 @@ router.get('/', async (req, res, next) => {
             uptime,
             dbConnections,
             dbMaxConnections,
-            dbSizeRows
+            dbSizeRows,
+            allAchievements,
+            allUserAchievements
         ] = await Promise.all([
             db.execute('SELECT id, username, permission_level FROM users ORDER BY created_at DESC'),
             db.execute(`
-                SELECT ic.id, ic.code, ic.created_at, ic.used_at,
-                       creator.username as creator_username, used_by.username as used_by_username
+                SELECT
+                    ic.id,
+                    ic.code,
+                    ic.created_at,
+                    ic.used_at,
+                    creator.username as creator_username,
+                    used_by.username as used_by_username
                 FROM invite_codes ic
                          JOIN users creator ON ic.created_by_user_id = creator.id
                          LEFT JOIN users used_by ON ic.used_by_user_id = used_by.id
@@ -59,7 +66,9 @@ router.get('/', async (req, res, next) => {
             db.execute(
                 'SELECT table_schema AS "db_name", ROUND(SUM(data_length + index_length), 2) AS "size_bytes" FROM information_schema.TABLES WHERE table_schema = ? GROUP BY table_schema;',
                 [process.env.DB_NAME]
-            )
+            ),
+            db.execute('SELECT id, name FROM achievements ORDER BY id'),
+            db.execute('SELECT user_id, achievement_id FROM user_achievements')
         ]);
 
         // Find the current process by its PID to get its specific stats
@@ -68,7 +77,6 @@ router.get('/', async (req, res, next) => {
         // Assemble the server metrics object
         const serverMetrics = {
             cpu: {
-                // FIX: Add a check to ensure mainProcess.pcpu is a valid number before calling toFixed()
                 load: (mainProcess && typeof mainProcess.pcpu === 'number') ? mainProcess.pcpu.toFixed(2) : '0.00'
             },
             ram: {
@@ -88,11 +96,21 @@ router.get('/', async (req, res, next) => {
         const maxConns = parseInt(serverMetrics.db.maxConnections, 10);
         serverMetrics.db.percent = (maxConns > 0) ? ((currentConns / maxConns) * 100).toFixed(2) : 0;
 
+        // Group achievements by user for easy lookup in the admin view
+        const achievementsByUser = allUserAchievements[0].reduce((acc, ua) => {
+            if (!acc[ua.user_id]) {
+                acc[ua.user_id] = new Set();
+            }
+            acc[ua.user_id].add(ua.achievement_id);
+            return acc;
+        }, {});
 
         res.render('admin', {
             users: users[0],
             invites: invites[0],
-            serverMetrics
+            serverMetrics,
+            achievements: allAchievements[0],
+            achievementsByUser
         });
     } catch (error) {
         next(error);
@@ -161,6 +179,37 @@ router.post('/delete-invite/:id', async (req, res) => {
     }
 });
 
+// NEW: Grant an achievement to a user
+router.post('/grant-achievement', async (req, res) => {
+    const { userId, achievementId } = req.body;
+    try {
+        await db.execute(
+            'INSERT IGNORE INTO user_achievements (user_id, achievement_id) VALUES (?, ?)',
+            [userId, achievementId]
+        );
+        req.flash('success', 'Achievement granted.');
+    } catch (error) {
+        console.error('Error granting achievement:', error);
+        req.flash('error', 'Failed to grant achievement.');
+    }
+    res.redirect('/admin');
+});
+
+// NEW: Revoke an achievement from a user
+router.post('/revoke-achievement', async (req, res) => {
+    const { userId, achievementId } = req.body;
+    try {
+        await db.execute(
+            'DELETE FROM user_achievements WHERE user_id = ? AND achievement_id = ?',
+            [userId, achievementId]
+        );
+        req.flash('success', 'Achievement revoked.');
+    } catch (error) {
+        console.error('Error revoking achievement:', error);
+        req.flash('error', 'Failed to revoke achievement.');
+    }
+    res.redirect('/admin');
+});
 
 // POST /admin/purge-cache
 router.post('/purge-cache', (req, res) => {

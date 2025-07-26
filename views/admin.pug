@@ -4,7 +4,7 @@ block content
     .admin-container
         h2 Admin Panel
 
-        //- NEW: Server Health & Metrics Section
+        //- Server Health & Metrics Section
         .admin-section-card
             h3 Server Health & Metrics
             .metrics-grid
@@ -19,7 +19,6 @@ block content
                 .metric-item
                     h4 Server Uptime
                     p.metric-value.large-text= serverMetrics.uptime
-                //- FIX: Updated DB Connections card
                 .metric-item
                     h4 DB Connections
                     .progress-bar
@@ -55,8 +54,11 @@ block content
                             th Username
                             th Permissions
                             th Actions
+                            //- NEW: Added a dedicated column for achievement management
+                            th Manage Achievements
                     tbody
                         each listUser in users
+                            //- FIX: All actions are now on a single row per user
                             tr
                                 td.user-username= listUser.username
                                 td
@@ -75,6 +77,19 @@ block content
                                                 data-confirm-title="Delete User"
                                             )
                                                 button.delete-btn(type="submit") Delete
+                                //- FIX: Achievement controls are now inline in their own cell
+                                td
+                                    .achievements-management
+                                        form.achievements-management-form(method="POST")
+                                            input(type="hidden", name="userId", value=listUser.id)
+                                            select(name="achievementId", required)
+                                                each achievement in achievements
+                                                    - const hasAch = achievementsByUser[listUser.id] && achievementsByUser[listUser.id].has(achievement.id)
+                                                    //- FIX: Removed 'disabled' so you can select earned achievements to revoke them. Added a checkmark for clarity.
+                                                    option(value=achievement.id) #{achievement.name} #{hasAch ? '✓' : ''}
+                                            .form-button-group
+                                                button.btn-achievement.grantable(type="submit", formaction="/admin/grant-achievement") Grant
+                                                button.btn-achievement.revokable(type="submit", formaction="/admin/revoke-achievement") Revoke
 
         .admin-section-card
             h3 Invite Code Management

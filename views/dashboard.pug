@@ -2,83 +2,60 @@ extends layout
 
 block content
     .dashboard-container
-        h2 Welcome, #{user.username}!
-        p Select a previous session to continue, or start a new one.
-
-        //- Form to create a session with a name
-        .form-container.session-creation-form
-            h3 Start New Session
+        .admin-section-card.session-creation-form
+            h3 Start a New Session
             form(action="/dashboard/sessions", method="POST")
                 .form-group
                     label(for="sessionName") Session Name
-                    input(type="text", id="sessionName", name="sessionName", placeholder="e.g., I Hate This Quest", required)
-                button.btn-primary(type="submit") Create Session
+                    input#sessionName(type="text", name="sessionName", placeholder="e.g., 'Late Night Comp'", required)
+                .form-group.submit-container
+                    button.btn-primary(type="submit") Create Session
 
-        h3 Previous Sessions
-        .session-list
-            if sessions.length > 0
-                each session in sessions
-                    .session-item-wrapper
-                        a.session-item(href=`/dashboard/session/${session.id}`)
-                            .session-info
-                                span.session-name= session.name
-                                span.session-date(data-timestamp=session.created_at)
-                            span.session-deaths #{session.death_count} Deaths
-                        .delete-trigger
-                            .session-delete-container
-                                //- FIX: Use the new data-confirm system instead of onsubmit
-                                form(
-                                    action=`/dashboard/session/${session.id}/delete`,
-                                    method="POST",
-                                    data-confirm=`Are you sure you want to permanently delete the session "${session.name}" and all its rage logs?`,
-                                    data-confirm-title="Delete Session"
-                                )
-                                    button.delete-btn(type="submit", title="Delete Session")
-                                        span.delete-icon 🗑️
-                                        span Delete
-            else
-                p You have no previous sessions.
+        h2 Your Sessions
 
-        //- Pagination Controls
+        if sessions && sessions.length > 0
+            each session in sessions
+                //- FIX: The link now correctly points to /session/:id
+                a.session-item(href=`/session/${session.id}`)
+                    .session-info
+                        span.session-name= session.name
+                        span.session-date(data-timestamp=session.created_at)
+                    if session.is_active
+                        span.status-verified Active
+                    else
+                        span.status-used Inactive
+                    span.session-deaths #{session.death_count} deaths
+        else
+            p You haven't created any sessions yet. Start one above!
+
         if totalPages > 1
-            nav.pagination
+            .pagination
                 if currentPage > 1
-                    a(href=`/dashboard?page=${currentPage - 1}`) &laquo;
+                    a(href=`/dashboard?page=${currentPage - 1}`) &laquo; Prev
                 else
-                    span.disabled &laquo;
+                    span.disabled &laquo; Prev
 
-                - for (let i = 1; i <= totalPages; i++)
-                if i === currentPage
-                    span.active= i
-                else
-                    a(href=`/dashboard?page=${i}`)= i
+                - let i = 1
+                while i <= totalPages
+                    if i === currentPage
+                        span.active= i
+                    else
+                        a(href=`/dashboard?page=${i}`)= i
+                    - i++
 
                 if currentPage < totalPages
-                    a(href=`/dashboard?page=${currentPage + 1}`) &raquo;
+                    a(href=`/dashboard?page=${currentPage + 1}`) Next &raquo;
                 else
-                    span.disabled &raquo;
+                    span.disabled Next &raquo;
 
-    //- Script to format timestamps and handle hover animations
+block scripts
     script.
+        // Script to format the timestamps on the dashboard
         document.addEventListener('DOMContentLoaded', () => {
-            // Format all timestamps to the user's local time
-            document.querySelectorAll('[data-timestamp]').forEach(el => {
+            document.querySelectorAll('.session-date[data-timestamp]').forEach(el => {
                 const timestamp = el.getAttribute('data-timestamp');
                 if (timestamp) {
                     el.textContent = new Date(timestamp).toLocaleString();
-                }
-            });
-
-            // JavaScript to handle the hover animations
-            document.querySelectorAll('.delete-trigger').forEach(trigger => {
-                const wrapper = trigger.closest('.session-item-wrapper');
-                if (wrapper) {
-                    trigger.addEventListener('mouseenter', () => {
-                        wrapper.classList.add('is-deleting');
-                    });
-                    wrapper.addEventListener('mouseleave', () => {
-                        wrapper.classList.remove('is-deleting');
-                    });
                 }
             });
         });

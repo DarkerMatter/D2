@@ -30,7 +30,20 @@ block content
             .chart-actions
                 button.btn.btn-primary#generateChartBtn Generate Graph
 
-    //- FIX: Corrected indentation on this container
+    //- Achievements Section
+    .form-container
+        h3 Achievements
+        .achievements-grid
+            each achievement in achievements
+                - const earned = earnedAchievements.has(achievement.id)
+                .achievement-card(class=(earned ? 'earned' : 'unearned'), title=(earned ? `Earned on: ${new Date(earnedAchievements.get(achievement.id)).toLocaleDateString()}` : 'Not yet earned'))
+                    .achievement-icon
+                        i.bi(class=achievement.icon)
+                    .achievement-details
+                        h4.achievement-name= achievement.name
+                        p.achievement-description= achievement.description
+
+    //- Invite Codes Section
     .form-container
         h3 Invite Codes
         p As a trusted member, you can generate invite codes for others to join.

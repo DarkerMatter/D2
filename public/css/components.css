@@ -118,7 +118,6 @@ button.delete-btn:hover:not(:disabled) {
     border: 1px solid;
     overflow: hidden;
     opacity: 1;
-    /* FIX: Reverted transition to remove box-shadow and border-color */
     transition: opacity 0.3s ease, transform 0.3s ease, height 0.3s ease, margin 0.3s ease, padding 0.3s ease;
 }
 
@@ -191,8 +190,6 @@ button.delete-btn:hover:not(:disabled) {
 .flash-error strong {
     color: var(--error-border);
 }
-
-/* FIX: Removed the :has() selector for the red highlight */
 
 /* --- Modals --- */
 .modal-overlay {
@@ -292,4 +289,63 @@ button.choice-btn:hover:not(.selected) {
     border-color: var(--accent-orange);
     color: #ffffff;
     font-weight: 700;
+}
+
+/* --- Toast Notifications --- */
+#toast-container {
+    position: fixed;
+    top: 80px; /* Position below the header */
+    right: 20px;
+    z-index: 1050;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    pointer-events: none; /* Allow clicks to pass through the container */
+}
+
+.toast-notification {
+    background-color: #1a1a1a;
+    color: #fff;
+    padding: 15px 20px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    border-left: 4px solid var(--accent-color);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    min-width: 320px;
+    opacity: 0;
+    transform: translateX(110%);
+    transition: all 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+    pointer-events: auto; /* Make individual toasts clickable */
+}
+
+.toast-notification.show {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.toast-icon {
+    font-size: 1.8rem;
+    color: var(--accent-color);
+}
+
+.toast-title {
+    font-weight: 700;
+    font-size: 1rem;
+}
+
+.toast-message {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+/* --- FIX: Achievement Toast Variant --- */
+.toast-notification.toast-achievement {
+    border-left-color: var(--accent-orange);
+}
+
+.toast-notification.toast-achievement .toast-icon {
+    color: var(--accent-orange);
 }

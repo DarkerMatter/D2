@@ -57,6 +57,25 @@
 }
 
 /* --- Dashboard & Session Pages --- */
+.session-container h2 {
+    border-bottom: none;
+    margin-bottom: 0.25rem;
+}
+
+.session-actions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.session-actions form {
+    margin: 0;
+}
+
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -510,3 +529,104 @@
     color: var(--accent-orange);
 }
 
+/* --- NEW: Achievements --- */
+.achievements-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+}
+
+.achievement-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background-color: #0a0a0a;
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    transition: all 0.2s ease-in-out;
+}
+
+.achievement-card.unearned {
+    opacity: 0.4;
+    filter: grayscale(80%);
+}
+
+.achievement-card.earned {
+    border-left: 4px solid var(--accent-color);
+}
+
+.achievement-icon {
+    font-size: 2.5rem;
+    color: var(--accent-color);
+    flex-shrink: 0;
+}
+.achievement-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.achievement-name {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.achievement-description {
+    margin: 0.25rem 0 0 0;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+.achievements-cell {
+    background-color: #0a0a0a;
+    padding: 1rem !important;
+}
+
+/* --- Achievement Management (Admin Page) --- */
+.achievements-management {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem; /* Tighter gap for inline controls */
+    align-items: center;
+}
+
+.achievements-management-form {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    margin: 0;
+}
+
+.achievements-management-form select {
+    min-width: 200px; /* Adjust width as needed */
+    flex-grow: 1;
+}
+
+.btn-achievement {
+    border: 1px solid var(--border-color);
+    color: white;
+    cursor: pointer;
+    padding: 0.6rem 1rem; /* Match other form buttons */
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    flex-shrink: 0; /* Prevent buttons from shrinking */
+}
+
+.btn-achievement.grantable {
+    background-color: var(--success-bg);
+    border-color: var(--success-border);
+}
+.btn-achievement.grantable:hover {
+    background-color: #2a5a38;
+}
+
+.btn-achievement.revokable {
+    background-color: var(--delete-bg);
+    border-color: var(--error-border);
+}
+.btn-achievement.revokable:hover {
+    background-color: #6a2a2a;
+}

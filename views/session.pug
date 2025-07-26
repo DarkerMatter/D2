@@ -1,221 +1,100 @@
 extends layout
 
 block content
-    .dashboard-container
-        //- Hidden div to pass server data to our client-side script
-        div(
-            id="dashboard-data"
-            style="display:none;"
-            data-total-rage=stats.totalRage
-            data-avg-rage=stats.averageRage
-            data-common-phrase=stats.mostCommonPhrase
-            data-total-deaths=stats.totalDeaths
-            data-created-at=session.created_at
-        )
+    .session-container
+        #session-title
+            h2#session-name-display= session.name
+            span#session-date-display(data-timestamp=session.created_at)
 
-        //- The updated title structure
-        h2#session-title
-            span#session-name-display= session.name
-            span.title-separator  |
-            span#session-date-display
-
-        //- Grid to display session stats
+        //- Grid to display session stats (Restored from your original file)
         .stats-grid
             .stat-card
                 h3 Session Total Rage
-                p.rage-score#total-rage-display= stats.totalRage
+                p.rage-score= stats.totalRage
             .stat-card
                 h3 Deaths This Session
-                p.rage-score#total-deaths-display= stats.totalDeaths
+                p.rage-score= stats.totalDeaths
             .stat-card
                 h3 Session Avg. Rage
-                p.stat-value#avg-rage-display= stats.averageRage
+                p.stat-value= stats.averageRage
             .stat-card
                 h3 Session Go-To Phrase
-                p.stat-value#common-phrase-display= stats.mostCommonPhrase
+                p.stat-value= stats.mostCommonPhrase
 
-        .form-container
-            h3 A Death Has Occurred...
-            form(action=`/dashboard/session/${session.id}/rage`, method="POST")
-                input(type="hidden", name="rageLevel", id="rageLevelInput", required)
-                input(type="hidden", name="ragePhrase", id="ragePhraseInput", required)
+        //- Log a death form (only shown for active sessions)
+        if session.is_active
+            .admin-section-card
+                h3 Log a New Death
+                //- FIX: Updated form action to match the new route
+                form.log-death-form(action=`/session/${session.id}/log-death`, method="POST")
+                    .form-group
+                        label Rage Level (1-10)
+                        .choice-grid.rage-level-grid
+                            each level in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+                                button.choice-btn(type="button", data-value=level)= level
+                        input(type="hidden", name="rageLevel", required)
+                    .form-group
+                        label Rage Phrase
+                        input(type="text", name="ragePhrase", placeholder="e.g., 'This is outrageous!'", required)
+                    .form-group.form-button-group
+                        button.btn-rage(type="submit") Log Death
 
-                .form-group
-                    label How upset are you? (1-10)
-                    .choice-grid.rage-level-grid#rageLevelContainer
-                        each i in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-                            button.choice-btn(type="button", data-value=i)= i
+        //- Session logs table
+        .admin-section-card
+            h3 Session Logs
+            if logs.length > 0
+                .user-table-container
+                    table.user-table
+                        thead
+                            tr
+                                th Time
+                                th Rage Level
+                                th Rage Phrase
+                        tbody
+                            each log in logs
+                                tr
+                                    td(data-timestamp=log.created_at)
+                                    td= log.rage_level
+                                    td= log.rage_phrase
+            else
+                p No deaths have been logged for this session yet.
 
-                .form-group
-                    label Select a phrase:
-                    .choice-grid.phrase-grid#ragePhraseContainer
-                        button.choice-btn(type="button", data-value="I hate this game.") "I hate this game."
-                        button.choice-btn(type="button", data-value="This game is shit.") "This game is shit."
-                        button.choice-btn(type="button", data-value="That's it, I'm uninstalling.") "That's it, I'm uninstalling."
+        //- NEW: Container for the End Session and Dashboard buttons
+        .session-actions
+            if session.is_active
+                form(action=`/session/${session.id}/end`, method="POST", data-confirm=`Are you sure you want to end the session "${session.name}"? This will calculate your final achievements.`, data-confirm-title="End Session")
+                    button.btn.btn-danger(type="submit") End Session & Calculate Achievements
+            a.btn.btn-secondary(href="/dashboard") Return to Dashboard
 
-                .submit-container
-                    button.btn-rage(type="submit", id="submitRageBtn", disabled) Add to Rage 🔥
-
-        //- Back to sessions link
-        .back-link-container
-            a.btn.btn-primary(href="/dashboard") &larr; Back to All Sessions
-
-        //- Rename session form
-        .form-container
-            h3 Rename Session
-            form(action=`/dashboard/session/${session.id}/rename`, method="POST")
-                .form-group
-                    label(for="newName") Session Name
-                    input#newName(type="text", name="newName", value=session.name, required)
-                button(type="submit") Save Name
-
-    //- Client-side script for caching and instant UI updates
+block scripts
     script.
         document.addEventListener('DOMContentLoaded', () => {
-            // --- 1. Element Selectors ---
-            const dataContainer = document.getElementById('dashboard-data');
-            const totalRageEl = document.getElementById('total-rage-display');
-            const totalDeathsEl = document.getElementById('total-deaths-display');
-            const avgRageEl = document.getElementById('avg-rage-display');
-            const commonPhraseEl = document.getElementById('common-phrase-display');
-            const statCards = document.querySelectorAll('.stats-grid .stat-card');
-            // FIX: Select the new date element specifically
-            const sessionDateEl = document.getElementById('session-date-display');
-
-            // --- 2. Reusable Functions ---
-            const cacheKey = `rageStats_user_#{user.id}_session_#{session.id}`;
-
-            const adjustFontAndGetRatio = (element, text, baseSize, maxLength, shrinkFactor, minSize) => {
-                let newSize = baseSize;
-                const textString = (text || '').toString();
-                if (textString.length > maxLength) {
-                    const overflow = textString.length - maxLength;
-                    newSize = Math.max(minSize, baseSize - overflow * shrinkFactor);
+            // Timestamp formatting
+            document.querySelectorAll('[data-timestamp]').forEach(el => {
+                const timestamp = el.getAttribute('data-timestamp');
+                if (timestamp) {
+                    el.textContent = new Date(timestamp).toLocaleString();
                 }
-                element.style.fontSize = `${newSize}rem`;
-                return newSize / baseSize;
-            };
+            });
 
-            const adjustPhraseFontToFit = (element, { baseSize, minSize, characterThreshold = 15, padding = 20 }) => {
-                element.style.fontSize = `${baseSize}rem`;
-                element.style.whiteSpace = 'normal';
-                const text = element.textContent || '';
-                if (text.length > characterThreshold) {
-                    element.style.whiteSpace = 'nowrap';
-                    const container = element.parentElement;
-                    const containerWidth = container.clientWidth - padding;
-                    const textWidth = element.scrollWidth;
-                    if (textWidth > containerWidth) {
-                        const overflowRatio = containerWidth / textWidth;
-                        let newSize = baseSize * overflowRatio;
-                        newSize = Math.max(newSize, minSize);
-                        element.style.fontSize = `${newSize}rem`;
-                    }
-                    element.style.whiteSpace = 'normal';
-                }
-            };
+            // Choice button logic for rage level
+            const rageGrid = document.querySelector('.rage-level-grid');
+            if (rageGrid) {
+                const hiddenInput = document.querySelector('input[name="rageLevel"]');
+                const buttons = rageGrid.querySelectorAll('.choice-btn');
 
-            const updateUI = (stats) => {
-                if (!stats) return;
-                const totalRageNumber = parseInt(stats.totalRage, 10) || 0;
-                const formattedRage = totalRageNumber.toLocaleString('en-US');
-                totalRageEl.textContent = formattedRage;
-                adjustFontAndGetRatio(totalRageEl, formattedRage, 3.5, 6, 0.3, 1.5);
+                buttons.forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const selectedValue = button.dataset.value;
 
-                const totalDeathsNumber = parseInt(stats.totalDeaths, 10) || 0;
-                const formattedDeaths = totalDeathsNumber.toLocaleString('en-US');
-                totalDeathsEl.textContent = formattedDeaths;
-                adjustFontAndGetRatio(totalDeathsEl, formattedDeaths, 3.5, 6, 0.3, 1.5);
+                        // Update hidden input
+                        hiddenInput.value = selectedValue;
 
-                const avgRageBaseSize = 3.5;
-                avgRageEl.textContent = stats.averageRage;
-                adjustFontAndGetRatio(avgRageEl, stats.averageRage, avgRageBaseSize, 3, 0.4, 1.0);
-
-                commonPhraseEl.textContent = stats.mostCommonPhrase;
-                adjustPhraseFontToFit(commonPhraseEl, {
-                    baseSize: 1.8,
-                    minSize: 1.0,
-                    characterThreshold: 20
-                });
-            };
-
-            // --- 3. Page Load & Animation Logic ---
-            const cachedStats = localStorage.getItem(cacheKey);
-            if (cachedStats) {
-                try {
-                    updateUI(JSON.parse(cachedStats));
-                } catch (e) {
-                    console.error('Failed to parse cached stats', e);
-                    localStorage.removeItem(cacheKey);
-                }
-            }
-
-            if (dataContainer) {
-                const serverStats = {
-                    totalRage: dataContainer.dataset.totalRage,
-                    totalDeaths: dataContainer.dataset.totalDeaths,
-                    averageRage: dataContainer.dataset.avgRage,
-                    mostCommonPhrase: dataContainer.dataset.commonPhrase,
-                };
-
-                const createdAt = dataContainer.dataset.createdAt;
-                // FIX: Update the date element without affecting the session name
-                if (createdAt && sessionDateEl) {
-                    sessionDateEl.textContent = new Date(createdAt).toLocaleString();
-                }
-
-                const urlParams = new URLSearchParams(window.location.search);
-                if (urlParams.has('updated')) {
-                    statCards.forEach(card => card.classList.add('is-updating'));
-                    updateUI(serverStats);
-                    statCards[0].addEventListener('animationend', () => {
-                        statCards.forEach(card => card.classList.remove('is-updating'));
-                    }, { once: true });
-                    window.history.replaceState({}, document.title, window.location.pathname);
-                } else {
-                    updateUI(serverStats);
-                }
-                localStorage.setItem(cacheKey, JSON.stringify(serverStats));
-            }
-
-            // --- 4. Interactive Form Logic (Unchanged) ---
-            const rageLevelContainer = document.getElementById('rageLevelContainer');
-            const ragePhraseContainer = document.getElementById('ragePhraseContainer');
-            const rageLevelInput = document.getElementById('rageLevelInput');
-            const ragePhraseInput = document.getElementById('ragePhraseInput');
-            const submitRageBtn = document.getElementById('submitRageBtn');
-
-            const checkFormValidity = () => {
-                submitRageBtn.disabled = !(rageLevelInput.value && ragePhraseInput.value);
-            };
-
-            const handleSelection = (container, input, clickedButton) => {
-                if (clickedButton.classList.contains('selected')) {
-                    clickedButton.classList.remove('selected');
-                    input.value = '';
-                } else {
-                    container.querySelectorAll('.choice-btn').forEach(btn => {
-                        btn.classList.remove('selected');
+                        // Update button styles
+                        buttons.forEach(btn => btn.classList.remove('selected'));
+                        button.classList.add('selected');
                     });
-                    clickedButton.classList.add('selected');
-                    input.value = clickedButton.dataset.value;
-                }
-                checkFormValidity();
-            };
-
-            if (rageLevelContainer) {
-                rageLevelContainer.addEventListener('click', (e) => {
-                    if (e.target.matches('.choice-btn')) {
-                        handleSelection(rageLevelContainer, rageLevelInput, e.target);
-                    }
-                });
-            }
-
-            if (ragePhraseContainer) {
-                ragePhraseContainer.addEventListener('click', (e) => {
-                    if (e.target.matches('.choice-btn')) {
-                        handleSelection(ragePhraseContainer, ragePhraseInput, e.target);
-                    }
                 });
             }
         });

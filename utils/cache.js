@@ -35,7 +35,18 @@ function set(key, data) {
 }
 
 /**
- * NEW: Clears all entries from the in-memory cache.
+ * Deletes a specific entry from the cache.
+ * @param {string} key The key of the entry to delete.
+ */
+function del(key) {
+    if (cache[key]) {
+        console.log(`[Cache] DEL for key: ${key}`);
+        delete cache[key];
+    }
+}
+
+/**
+ * Clears all entries from the in-memory cache.
  */
 function clear() {
     console.log('[Cache] CLEARED');
@@ -45,4 +56,5 @@ function clear() {
     }
 }
 
-module.exports = { get, set, clear };
+// FIX: Add the new 'del' function to the exports
+module.exports = { get, set, clear, del };
