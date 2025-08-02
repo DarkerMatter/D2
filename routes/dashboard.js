@@ -36,7 +36,6 @@ router.get('/', isAuthenticated, async (req, res, next) => {
         });
 
     } catch (error) {
-        // Pass errors to the global error handler for consistent error pages
         next(error);
     }
 });
@@ -47,7 +46,8 @@ router.post('/sessions', isAuthenticated, async (req, res, next) => {
     const userId = req.session.user.id;
 
     if (!sessionName || sessionName.trim() === '') {
-        req.flash('error', 'Session name cannot be empty.');
+        // FIX: Use the new unified toast notification system
+        req.flash('toast_notification', JSON.stringify({ type: 'error', message: 'Session name cannot be empty.' }));
         return res.redirect('/dashboard');
     }
 

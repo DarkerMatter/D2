@@ -15,16 +15,19 @@ block content
 
         if sessions && sessions.length > 0
             each session in sessions
-                //- FIX: The link now correctly points to /session/:id
+                //- The link now correctly points to /session/:id
                 a.session-item(href=`/session/${session.id}`)
                     .session-info
                         span.session-name= session.name
                         span.session-date(data-timestamp=session.created_at)
-                    if session.is_active
-                        span.status-verified Active
-                    else
-                        span.status-used Inactive
-                    span.session-deaths #{session.death_count} deaths
+                    //- NEW: A container for the metadata on the right
+                    .session-meta
+                        //- FIX: Added the status indicator back to the dashboard view
+                        if session.is_active
+                            span.status-verified Active
+                        else
+                            span.status-used Inactive
+                        span.session-deaths #{session.death_count} deaths
         else
             p You haven't created any sessions yet. Start one above!
 

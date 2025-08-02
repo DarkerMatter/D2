@@ -22,13 +22,36 @@ block content
                 h3 Lifetime Go-To Phrase
                 p.stat-value= stats.mostCommonPhrase
 
-        //- Updated container for the on-demand chart
-        .chart-container
-            h4 Rage Progression
-            p.chart-description Average rage level for each subsequent death across all of your sessions.
-            canvas#rageProgressionChart
-            .chart-actions
-                button.btn.btn-primary#generateChartBtn Generate Graph
+        //- FIX: The charts wrapper was missing and the charts were in the wrong place.
+        //- This wrapper now correctly contains both charts outside of the stats grid.
+        .charts-wrapper
+            .chart-container
+                h4 Rage Progression
+                p.chart-description Average rage level for each subsequent death across all of your sessions.
+                canvas#rageProgressionChart
+                .chart-actions
+                    button.btn.btn-primary#generateChartBtn Generate Graph
+            .chart-container
+                h4 "Colorful" Language Usage
+                p.chart-description Your top 5 most frequently used swear words.
+                canvas#swearWordChart
+                .chart-actions
+                    button.btn.btn-primary#generateSwearChartBtn Generate Graph
+
+    .form-container
+        h3 Customize Quick Phrases
+        p Set up to three phrases that will appear as buttons for faster logging.
+        form(action="/account/update-phrases", method="POST")
+            .form-group
+                label(for="phrase1") Quick Phrase 1
+                input#phrase1(type="text", name="phrase1", value=user.quick_phrase_1, placeholder="e.g., 'Not again!'")
+            .form-group
+                label(for="phrase2") Quick Phrase 2
+                input#phrase2(type="text", name="phrase2", value=user.quick_phrase_2, placeholder="e.g., 'This game is broken.'")
+            .form-group
+                label(for="phrase3") Quick Phrase 3
+                input#phrase3(type="text", name="phrase3", value=user.quick_phrase_3, placeholder="e.g., 'I give up.'")
+            button.btn-primary(type="submit") Save Phrases
 
     //- Achievements Section
     .form-container
@@ -92,112 +115,157 @@ block content
             button.delete-btn(type="submit") Delete All My Data
 
 block scripts
+    //- The entire script block has been restructured into a single, valid DOMContentLoaded listener.
     script.
-        // --- Copy to Clipboard for Invite Codes ---
-        document.querySelectorAll('.btn-copy').forEach(button => {
-            button.addEventListener('click', () => {
-                const codeToCopy = button.dataset.code;
-                navigator.clipboard.writeText(codeToCopy).then(() => {
-                    button.textContent = 'Copied!';
-                    setTimeout(() => {
-                        button.textContent = 'Copy';
-                    }, 2000);
-                }).catch(err => {
-                    console.error('Failed to copy code:', err);
-                    alert('Failed to copy code.');
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- 1. Copy to Clipboard for Invite Codes ---
+            document.querySelectorAll('.btn-copy').forEach(button => {
+                button.addEventListener('click', () => {
+                    const codeToCopy = button.dataset.code;
+                    navigator.clipboard.writeText(codeToCopy).then(() => {
+                        button.textContent = 'Copied!';
+                        setTimeout(() => {
+                            button.textContent = 'Copy';
+                        }, 2000);
+                    }).catch(err => {
+                        console.error('Failed to copy code:', err);
+                        alert('Failed to copy code.');
+                    });
                 });
             });
-        });
 
-        // --- On-Demand Chart Generation ---
-        document.addEventListener('DOMContentLoaded', () => {
+            // --- 2. Rage Progression Chart Logic ---
             const generateBtn = document.getElementById('generateChartBtn');
             const canvas = document.getElementById('rageProgressionChart');
-            const ctx = canvas.getContext('2d');
-            let rageChart = null; // Variable to hold the chart instance
+            if (generateBtn && canvas) {
+                const ctx = canvas.getContext('2d');
+                let chart = null;
 
-            const renderChart = (chartData) => {
-                if (rageChart) {
-                    rageChart.destroy();
-                }
-                if (!chartData || chartData.length === 0) {
-                    canvas.style.display = 'none';
-                    return;
-                }
-                canvas.style.display = 'block';
-
-                const labels = chartData.map(d => `Death ${d.death_number}`);
-                const data = chartData.map(d => parseFloat(d.average_rage).toFixed(2));
-
-                const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-                gradient.addColorStop(0, 'rgba(220, 53, 69, 0.6)');
-                gradient.addColorStop(1, 'rgba(220, 53, 69, 0.05)');
-
-                rageChart = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            label: 'Average Rage Level',
-                            data: data,
-                            borderColor: 'rgba(220, 53, 69, 1)',
-                            backgroundColor: gradient,
-                            fill: true,
-                            tension: 0.4,
-                            pointBackgroundColor: '#fff',
-                            pointBorderColor: 'rgba(220, 53, 69, 1)',
-                            pointBorderWidth: 2,
-                            pointHoverRadius: 7,
-                            pointHoverBackgroundColor: '#fff',
-                            pointHoverBorderColor: 'rgba(220, 53, 69, 1)',
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: true,
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                max: 10,
-                                grid: { color: 'rgba(255, 255, 255, 0.1)' },
-                                ticks: { color: '#888' }
-                            },
-                            x: {
-                                grid: { display: false },
-                                ticks: { color: '#888' }
-                            }
+                const renderChart = (chartData) => {
+                    if (chart) chart.destroy();
+                    if (!chartData || chartData.length === 0) {
+                        canvas.style.display = 'none';
+                        const noDataMessage = document.createElement('p');
+                        noDataMessage.textContent = 'No data to display. Go log some deaths!';
+                        noDataMessage.style.color = 'var(--text-secondary)';
+                        canvas.parentNode.insertBefore(noDataMessage, canvas.nextSibling);
+                        return;
+                    }
+                    canvas.style.display = 'block';
+                    chart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: chartData.map(d => `Death #${d.death_number}`),
+                            datasets: [{
+                                label: 'Average Rage Level',
+                                data: chartData.map(d => d.average_rage),
+                                fill: true,
+                                // FIX: Changed the graph colors from blue to red
+                                backgroundColor: 'rgba(220, 53, 69, 0.2)',
+                                borderColor: 'rgba(220, 53, 69, 1)',
+                                tension: 0.3
+                            }]
                         },
-                        plugins: {
-                            legend: { display: false },
-                            tooltip: {
-                                backgroundColor: '#000',
-                                titleColor: '#fff',
-                                bodyColor: '#fff',
-                                borderColor: '#333',
-                                borderWidth: 1
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            scales: {
+                                y: { beginAtZero: true, max: 10, grid: { color: 'rgba(255, 255, 255, 0.1)' }, ticks: { color: '#888' } },
+                                x: { grid: { color: 'rgba(255, 255, 255, 0.1)' }, ticks: { color: '#888' } }
+                            },
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: { backgroundColor: '#000', titleColor: '#fff', bodyColor: '#fff', borderColor: '#333', borderWidth: 1 }
                             }
+                        }
+                    });
+                };
+
+                generateBtn.addEventListener('click', async () => {
+                    generateBtn.disabled = true;
+                    generateBtn.textContent = 'Generating...';
+                    try {
+                        const response = await fetch('/account/analytics/rage-progression');
+                        if (!response.ok) throw new Error(`Server returned status: ${response.status}`);
+                        const data = await response.json();
+                        renderChart(data);
+                    } catch (error) {
+                        console.error('Failed to fetch or render chart:', error);
+                        generateBtn.textContent = 'Failed. Try Again.';
+                    } finally {
+                        if (generateBtn.textContent.includes('Generating')) {
+                            generateBtn.style.display = 'none';
+                        } else {
+                            generateBtn.disabled = false;
                         }
                     }
                 });
-            };
+            }
 
-            generateBtn.addEventListener('click', async () => {
-                generateBtn.disabled = true;
-                generateBtn.textContent = 'Generating...';
+            // --- 3. Swear Word Chart Logic ---
+            const generateSwearBtn = document.getElementById('generateSwearChartBtn');
+            const swearCanvas = document.getElementById('swearWordChart');
+            if (generateSwearBtn && swearCanvas) {
+                const swearCtx = swearCanvas.getContext('2d');
+                let swearChart = null;
 
-                try {
-                    const response = await fetch('/account/analytics/rage-progression');
-                    if (!response.ok) {
-                        throw new Error(`Server returned status: ${response.status}`);
+                const renderSwearChart = (chartData) => {
+                    if (swearChart) swearChart.destroy();
+                    if (!chartData || chartData.length === 0) {
+                        swearCanvas.style.display = 'none';
+                        const noDataMessage = document.createElement('p');
+                        noDataMessage.textContent = 'No data to display. Time to get tilted!';
+                        noDataMessage.style.color = 'var(--text-secondary)';
+                        swearCanvas.parentNode.insertBefore(noDataMessage, swearCanvas.nextSibling);
+                        return;
                     }
-                    const data = await response.json();
-                    renderChart(data);
-                } catch (error) {
-                    console.error('Failed to fetch or render chart:', error);
-                    generateBtn.textContent = 'Failed. Try Again.';
-                } finally {
-                    generateBtn.disabled = false;
-                    generateBtn.textContent = 'Update Graph';
-                }
-            });
+                    swearCanvas.style.display = 'block';
+                    swearChart = new Chart(swearCtx, {
+                        type: 'bar',
+                        data: {
+                            labels: chartData.map(d => d.name),
+                            datasets: [{
+                                label: 'Usage Count',
+                                data: chartData.map(d => d.count),
+                                backgroundColor: ['rgba(220, 53, 69, 0.7)', 'rgba(245, 166, 35, 0.7)', 'rgba(0, 112, 243, 0.7)', 'rgba(25, 135, 84, 0.7)', 'rgba(108, 117, 125, 0.7)'],
+                                borderColor: ['rgba(220, 53, 69, 1)', 'rgba(245, 166, 35, 1)', 'rgba(0, 112, 243, 1)', 'rgba(25, 135, 84, 1)', 'rgba(108, 117, 125, 1)'],
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            indexAxis: 'y',
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            scales: {
+                                x: { beginAtZero: true, grid: { color: 'rgba(255, 255, 255, 0.1)' }, ticks: { color: '#888', precision: 0 } },
+                                y: { grid: { display: false }, ticks: { color: '#888' } }
+                            },
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: { backgroundColor: '#000', titleColor: '#fff', bodyColor: '#fff', borderColor: '#333', borderWidth: 1 }
+                            }
+                        }
+                    });
+                };
+
+                generateSwearBtn.addEventListener('click', async () => {
+                    generateSwearBtn.disabled = true;
+                    generateSwearBtn.textContent = 'Analyzing...';
+                    try {
+                        const response = await fetch('/account/analytics/swear-words');
+                        if (!response.ok) throw new Error(`Server error: ${response.status}`);
+                        const data = await response.json();
+                        renderSwearChart(data);
+                    } catch (error) {
+                        console.error('Failed to fetch or render swear chart:', error);
+                        generateSwearBtn.textContent = 'Failed. Try Again.';
+                    } finally {
+                        if (generateSwearBtn.textContent.includes('Analyzing')) {
+                            generateSwearBtn.style.display = 'none';
+                        } else {
+                            generateSwearBtn.disabled = false;
+                        }
+                    }
+                });
+            }
         });

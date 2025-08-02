@@ -122,14 +122,14 @@ router.post('/create-user', async (req, res) => {
     const { username, password, permission_level } = req.body;
 
     if (!username || !password || !permission_level) {
-        req.flash('error', 'Username, password, and permission level are required.');
+        req.flash('toast_notification', JSON.stringify({ type: 'error', message: 'Username, password, and permission level are required.' }));
         return res.redirect('/admin');
     }
 
     try {
         const [existing] = await db.execute('SELECT id FROM users WHERE username = ?', [username]);
         if (existing.length > 0) {
-            req.flash('error', 'A user with that username already exists.');
+            req.flash('toast_notification', JSON.stringify({ type: 'error', message: 'A user with that username already exists.' }));
             return res.redirect('/admin');
         }
 
@@ -138,11 +138,11 @@ router.post('/create-user', async (req, res) => {
             'INSERT INTO users (username, password, permission_level) VALUES (?, ?, ?)',
             [username, hashedPassword, parseInt(permission_level, 10)]
         );
-        req.flash('success', `User '${username}' created successfully.`);
+        req.flash('toast_notification', JSON.stringify({ type: 'success', message: `User '${username}' created successfully.` }));
         res.redirect('/admin');
     } catch (error) {
         console.error('Create user error:', error);
-        req.flash('error', 'An error occurred while creating the user.');
+        req.flash('toast_notification', JSON.stringify({ type: 'error', message: 'An error occurred while creating the user.' }));
         res.redirect('/admin');
     }
 });
@@ -156,11 +156,11 @@ router.post('/generate-invite', async (req, res) => {
             'INSERT INTO invite_codes (code, created_by_user_id) VALUES (?, ?)',
             [newCode, adminUserId]
         );
-        req.flash('success', 'New invite code generated.');
+        req.flash('toast_notification', JSON.stringify({ type: 'success', message: 'New invite code generated.' }));
         res.redirect('/admin');
     } catch (error) {
         console.error('Admin invite generation error:', error);
-        req.flash('error', 'Failed to generate invite code.');
+        req.flash('toast_notification', JSON.stringify({ type: 'error', message: 'Failed to generate invite code.' }));
         res.redirect('/admin');
     }
 });
@@ -170,11 +170,11 @@ router.post('/delete-invite/:id', async (req, res) => {
     const inviteId = req.params.id;
     try {
         await db.execute('DELETE FROM invite_codes WHERE id = ?', [inviteId]);
-        req.flash('success', 'Invite code has been deleted.');
+        req.flash('toast_notification', JSON.stringify({ type: 'success', message: 'Invite code has been deleted.' }));
         res.redirect('/admin');
     } catch (error) {
         console.error('Delete invite error:', error);
-        req.flash('error', 'Failed to delete invite code.');
+        req.flash('toast_notification', JSON.stringify({ type: 'error', message: 'Failed to delete invite code.' }));
         res.redirect('/admin');
     }
 });
@@ -187,10 +187,10 @@ router.post('/grant-achievement', async (req, res) => {
             'INSERT IGNORE INTO user_achievements (user_id, achievement_id) VALUES (?, ?)',
             [userId, achievementId]
         );
-        req.flash('success', 'Achievement granted.');
+        req.flash('toast_notification', JSON.stringify({ type: 'success', message: 'Achievement granted.' }));
     } catch (error) {
         console.error('Error granting achievement:', error);
-        req.flash('error', 'Failed to grant achievement.');
+        req.flash('toast_notification', JSON.stringify({ type: 'error', message: 'Failed to grant achievement.' }));
     }
     res.redirect('/admin');
 });
@@ -203,10 +203,10 @@ router.post('/revoke-achievement', async (req, res) => {
             'DELETE FROM user_achievements WHERE user_id = ? AND achievement_id = ?',
             [userId, achievementId]
         );
-        req.flash('success', 'Achievement revoked.');
+        req.flash('toast_notification', JSON.stringify({ type: 'success', message: 'Achievement revoked.' }));
     } catch (error) {
         console.error('Error revoking achievement:', error);
-        req.flash('error', 'Failed to revoke achievement.');
+        req.flash('toast_notification', JSON.stringify({ type: 'error', message: 'Failed to revoke achievement.' }));
     }
     res.redirect('/admin');
 });
@@ -214,7 +214,7 @@ router.post('/revoke-achievement', async (req, res) => {
 // POST /admin/purge-cache
 router.post('/purge-cache', (req, res) => {
     cache.clear();
-    req.flash('success', 'Server cache has been successfully purged.');
+    req.flash('toast_notification', JSON.stringify({ type: 'success', message: 'Server cache has been successfully purged.' }));
     res.redirect('/admin');
 });
 
@@ -225,22 +225,22 @@ router.post('/edit-user/:id', async (req, res) => {
     const permLevelInt = parseInt(permission_level, 10);
 
     if (parseInt(userIdToEdit, 10) === req.session.user.id) {
-        req.flash('error', 'You cannot change your own permission level.');
+        req.flash('toast_notification', JSON.stringify({ type: 'error', message: 'You cannot change your own permission level.' }));
         return res.redirect('/admin');
     }
 
     if (![0, 1, 5].includes(permLevelInt)) {
-        req.flash('error', 'Invalid permission level selected.');
+        req.flash('toast_notification', JSON.stringify({ type: 'error', message: 'Invalid permission level selected.' }));
         return res.redirect('/admin');
     }
 
     try {
         await db.execute('UPDATE users SET permission_level = ? WHERE id = ?', [permLevelInt, userIdToEdit]);
-        req.flash('success', 'User permissions updated.');
+        req.flash('toast_notification', JSON.stringify({ type: 'success', message: 'User permissions updated.' }));
         res.redirect('/admin');
     } catch (error) {
         console.error('Edit user error:', error);
-        req.flash('error', 'An error occurred while updating user.');
+        req.flash('toast_notification', JSON.stringify({ type: 'error', message: 'An error occurred while updating user.' }));
         res.redirect('/admin');
     }
 });
@@ -250,17 +250,17 @@ router.post('/delete-user/:id', async (req, res) => {
     const userIdToDelete = req.params.id;
 
     if (parseInt(userIdToDelete, 10) === req.session.user.id) {
-        req.flash('error', 'You cannot delete your own account.');
+        req.flash('toast_notification', JSON.stringify({ type: 'error', message: 'You cannot delete your own account.' }));
         return res.redirect('/admin');
     }
 
     try {
         await db.execute('DELETE FROM users WHERE id = ?', [userIdToDelete]);
-        req.flash('success', 'User has been deleted.');
+        req.flash('toast_notification', JSON.stringify({ type: 'success', message: 'User has been deleted.' }));
         res.redirect('/admin');
     } catch (error) {
         console.error('Delete user error:', error);
-        req.flash('error', 'An error occurred while deleting user.');
+        req.flash('toast_notification', JSON.stringify({ type: 'error', message: 'An error occurred while deleting user.' }));
         res.redirect('/admin');
     }
 });

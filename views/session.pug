@@ -4,9 +4,15 @@ block content
     .session-container
         #session-title
             h2#session-name-display= session.name
+            //- NEW: Status badge to show if the session is active or inactive
+            if session.is_active
+                span.status-badge.status-verified Active
+            else
+                span.status-badge.status-used Inactive
+        #session-date-container
             span#session-date-display(data-timestamp=session.created_at)
 
-        //- Grid to display session stats (Restored from your original file)
+        //- Grid to display session stats
         .stats-grid
             .stat-card
                 h3 Session Total Rage
@@ -25,19 +31,30 @@ block content
         if session.is_active
             .admin-section-card
                 h3 Log a New Death
-                //- FIX: Updated form action to match the new route
                 form.log-death-form(action=`/session/${session.id}/log-death`, method="POST")
                     .form-group
                         label Rage Level (1-10)
-                        .choice-grid.rage-level-grid
-                            each level in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-                                button.choice-btn(type="button", data-value=level)= level
-                        input(type="hidden", name="rageLevel", required)
+                        .rage-slider-container
+                            input#rageSlider(type="range", min="1", max="10", value="5")
+                            span#rageValue 5
+                        input(type="hidden", name="rageLevel", value="5", required)
+
                     .form-group
                         label Rage Phrase
-                        input(type="text", name="ragePhrase", placeholder="e.g., 'This is outrageous!'", required)
+                        //- NEW: Conditionally display custom phrases or a prompt
+                        if customPhrases && customPhrases.length > 0
+                            .choice-grid.quick-phrase-grid
+                                each phrase in customPhrases
+                                    button.choice-btn.quick-phrase(type="button")= phrase
+                        else
+                            .quick-phrase-prompt
+                                p You haven't set any custom quick phrases yet. #[a(href="/account") Create some here] for faster logging!
+
+                        input#ragePhraseInput(type="text", name="ragePhrase", placeholder="Select a quick phrase or type your own", required)
+
                     .form-group.form-button-group
                         button.btn-rage(type="submit") Log Death
+
 
         //- Session logs table
         .admin-section-card
@@ -59,12 +76,15 @@ block content
             else
                 p No deaths have been logged for this session yet.
 
-        //- NEW: Container for the End Session and Dashboard buttons
+        //- Container for all action buttons
         .session-actions
+            a.btn.btn-secondary(href="/dashboard") Return to Dashboard
             if session.is_active
                 form(action=`/session/${session.id}/end`, method="POST", data-confirm=`Are you sure you want to end the session "${session.name}"? This will calculate your final achievements.`, data-confirm-title="End Session")
-                    button.btn.btn-danger(type="submit") End Session & Calculate Achievements
-            a.btn.btn-secondary(href="/dashboard") Return to Dashboard
+                    button.btn.btn-primary(type="submit") End Session & Check Achievements
+            //- NEW: Delete button, styled differently and placed here
+            form(action=`/session/${session.id}/delete`, method="POST", data-confirm=`Are you sure you want to permanently delete "${session.name}" and all its logs? This cannot be undone.`, data-confirm-title="Delete Session")
+                button.btn.btn-danger(type="submit") Delete Session
 
 block scripts
     script.
@@ -77,24 +97,38 @@ block scripts
                 }
             });
 
-            // Choice button logic for rage level
-            const rageGrid = document.querySelector('.rage-level-grid');
-            if (rageGrid) {
-                const hiddenInput = document.querySelector('input[name="rageLevel"]');
-                const buttons = rageGrid.querySelectorAll('.choice-btn');
+            // --- NEW: Rage Slider Logic ---
+            const rageSlider = document.getElementById('rageSlider');
+            const rageValueSpan = document.getElementById('rageValue');
+            const hiddenRageInput = document.querySelector('input[name="rageLevel"]');
 
-                buttons.forEach(button => {
-                    button.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        const selectedValue = button.dataset.value;
+            if (rageSlider) {
+                rageSlider.addEventListener('input', () => {
+                    const value = rageSlider.value;
+                    rageValueSpan.textContent = value;
+                    hiddenRageInput.value = value;
+                });
+            }
 
-                        // Update hidden input
-                        hiddenInput.value = selectedValue;
+            // --- NEW: Quick Phrase Logic ---
+            const quickPhraseButtons = document.querySelectorAll('.quick-phrase');
+            const ragePhraseInput = document.getElementById('ragePhraseInput');
 
-                        // Update button styles
-                        buttons.forEach(btn => btn.classList.remove('selected'));
+            if (quickPhraseButtons.length > 0 && ragePhraseInput) {
+                quickPhraseButtons.forEach(button => {
+                    button.addEventListener('click', () => {
+                        // Set the input value to the button's text
+                        ragePhraseInput.value = button.textContent;
+
+                        // Update selected styles
+                        quickPhraseButtons.forEach(btn => btn.classList.remove('selected'));
                         button.classList.add('selected');
                     });
+                });
+
+                // If user types a custom phrase, deselect the buttons
+                ragePhraseInput.addEventListener('input', () => {
+                    quickPhraseButtons.forEach(btn => btn.classList.remove('selected'));
                 });
             }
         });
