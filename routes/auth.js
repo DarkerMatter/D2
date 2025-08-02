@@ -16,11 +16,11 @@ router.post('/register', async (req, res, next) => {
     const { username, password, invite_code } = req.body;
 
     if (!username || !password || !invite_code) {
-        req.flash('error', 'Username, password, and a valid invite code are required.');
+        req.flash('toast_notification', JSON.stringify({ type: 'error', message: 'Username, password, and a valid invite code are required.' }));
         return res.redirect('/register');
     }
     if (password.length < 8) {
-        req.flash('error', 'Password must be at least 8 characters long.');
+        req.flash('toast_notification', JSON.stringify({ type: 'error', message: 'Password must be at least 8 characters long.' }));
         return res.redirect('/register');
     }
 
@@ -36,14 +36,14 @@ router.post('/register', async (req, res, next) => {
         );
 
         if (codes.length === 0) {
-            req.flash('error', 'Invalid invite code.');
+            req.flash('toast_notification', JSON.stringify({ type: 'error', message: 'Invalid invite code.' }));
             await connection.rollback();
             return res.redirect('/register');
         }
 
         const invite = codes[0];
         if (invite.used_by_user_id) {
-            req.flash('error', 'This invite code has already been used.');
+            req.flash('toast_notification', JSON.stringify({ type: 'error', message: 'This invite code has already been used.' }));
             await connection.rollback();
             return res.redirect('/register');
         }
@@ -51,7 +51,7 @@ router.post('/register', async (req, res, next) => {
         // 2. Check if username is already taken
         const [existingUsers] = await connection.execute('SELECT id FROM users WHERE username = ?', [username]);
         if (existingUsers.length > 0) {
-            req.flash('error', 'That username is already taken.');
+            req.flash('toast_notification', JSON.stringify({ type: 'error', message: 'That username is already taken.' }));
             await connection.rollback();
             return res.redirect('/register');
         }
@@ -82,7 +82,7 @@ router.post('/register', async (req, res, next) => {
             if (err) {
                 return next(err);
             }
-            req.flash('success', 'Welcome! Your account has been created.');
+            req.flash('toast_notification', JSON.stringify({ type: 'success', message: 'Welcome! Your account has been created.' }));
             res.redirect('/dashboard');
         });
 
@@ -104,16 +104,14 @@ router.post('/login', async (req, res, next) => {
     try {
         const [rows] = await db.execute('SELECT * FROM users WHERE username = ?', [username]);
         if (rows.length === 0) {
-            req.flash('error', 'Invalid username or password.');
+            req.flash('toast_notification', JSON.stringify({ type: 'error', message: 'Invalid username or password.' }));
             return res.redirect('/login');
         }
 
         const user = rows[0];
 
-        // FIX: Removed the email verification check as it's no longer part of the flow
-
         if (user.permission_level === 0) {
-            req.flash('error', 'This account has been suspended.');
+            req.flash('toast_notification', JSON.stringify({ type: 'error', message: 'This account has been suspended.' }));
             return res.redirect('/login');
         }
 
@@ -132,7 +130,7 @@ router.post('/login', async (req, res, next) => {
                 res.redirect('/dashboard');
             });
         } else {
-            req.flash('error', 'Invalid username or password.');
+            req.flash('toast_notification', JSON.stringify({ type: 'error', message: 'Invalid username or password.' }));
             res.redirect('/login');
         }
     } catch (error) {
@@ -149,7 +147,5 @@ router.get('/logout', (req, res, next) => {
         res.redirect('/');
     });
 });
-
-// FIX: All email verification routes are now obsolete and have been removed.
 
 module.exports = router;

@@ -41,12 +41,19 @@ router.get('/', async (req, res, next) => {
             uptime,
             dbConnections,
             dbMaxConnections,
-            dbSizeRows
+            dbSizeRows,
+            allAchievements,
+            allUserAchievements
         ] = await Promise.all([
             db.execute('SELECT id, username, permission_level FROM users ORDER BY created_at DESC'),
             db.execute(`
-                SELECT ic.id, ic.code, ic.created_at, ic.used_at,
-                       creator.username as creator_username, used_by.username as used_by_username
+                SELECT
+                    ic.id,
+                    ic.code,
+                    ic.created_at,
+                    ic.used_at,
+                    creator.username as creator_username,
+                    used_by.username as used_by_username
                 FROM invite_codes ic
                          JOIN users creator ON ic.created_by_user_id = creator.id
                          LEFT JOIN users used_by ON ic.used_by_user_id = used_by.id
@@ -59,7 +66,9 @@ router.get('/', async (req, res, next) => {
             db.execute(
                 'SELECT table_schema AS "db_name", ROUND(SUM(data_length + index_length), 2) AS "size_bytes" FROM information_schema.TABLES WHERE table_schema = ? GROUP BY table_schema;',
                 [process.env.DB_NAME]
-            )
+            ),
+            db.execute('SELECT id, name FROM achievements ORDER BY id'),
+            db.execute('SELECT user_id, achievement_id FROM user_achievements')
         ]);
 
         // Find the current process by its PID to get its specific stats
@@ -68,7 +77,6 @@ router.get('/', async (req, res, next) => {
         // Assemble the server metrics object
         const serverMetrics = {
             cpu: {
-                // FIX: Add a check to ensure mainProcess.pcpu is a valid number before calling toFixed()
                 load: (mainProcess && typeof mainProcess.pcpu === 'number') ? mainProcess.pcpu.toFixed(2) : '0.00'
             },
             ram: {
@@ -88,11 +96,21 @@ router.get('/', async (req, res, next) => {
         const maxConns = parseInt(serverMetrics.db.maxConnections, 10);
         serverMetrics.db.percent = (maxConns > 0) ? ((currentConns / maxConns) * 100).toFixed(2) : 0;
 
+        // Group achievements by user for easy lookup in the admin view
+        const achievementsByUser = allUserAchievements[0].reduce((acc, ua) => {
+            if (!acc[ua.user_id]) {
+                acc[ua.user_id] = new Set();
+            }
+            acc[ua.user_id].add(ua.achievement_id);
+            return acc;
+        }, {});
 
         res.render('admin', {
             users: users[0],
             invites: invites[0],
-            serverMetrics
+            serverMetrics,
+            achievements: allAchievements[0],
+            achievementsByUser
         });
     } catch (error) {
         next(error);
@@ -104,14 +122,14 @@ router.post('/create-user', async (req, res) => {
     const { username, password, permission_level } = req.body;
 
     if (!username || !password || !permission_level) {
-        req.flash('error', 'Username, password, and permission level are required.');
+        req.flash('toast_notification', JSON.stringify({ type: 'error', message: 'Username, password, and permission level are required.' }));
         return res.redirect('/admin');
     }
 
     try {
         const [existing] = await db.execute('SELECT id FROM users WHERE username = ?', [username]);
         if (existing.length > 0) {
-            req.flash('error', 'A user with that username already exists.');
+            req.flash('toast_notification', JSON.stringify({ type: 'error', message: 'A user with that username already exists.' }));
             return res.redirect('/admin');
         }
 
@@ -120,11 +138,11 @@ router.post('/create-user', async (req, res) => {
             'INSERT INTO users (username, password, permission_level) VALUES (?, ?, ?)',
             [username, hashedPassword, parseInt(permission_level, 10)]
         );
-        req.flash('success', `User '${username}' created successfully.`);
+        req.flash('toast_notification', JSON.stringify({ type: 'success', message: `User '${username}' created successfully.` }));
         res.redirect('/admin');
     } catch (error) {
         console.error('Create user error:', error);
-        req.flash('error', 'An error occurred while creating the user.');
+        req.flash('toast_notification', JSON.stringify({ type: 'error', message: 'An error occurred while creating the user.' }));
         res.redirect('/admin');
     }
 });
@@ -138,11 +156,11 @@ router.post('/generate-invite', async (req, res) => {
             'INSERT INTO invite_codes (code, created_by_user_id) VALUES (?, ?)',
             [newCode, adminUserId]
         );
-        req.flash('success', 'New invite code generated.');
+        req.flash('toast_notification', JSON.stringify({ type: 'success', message: 'New invite code generated.' }));
         res.redirect('/admin');
     } catch (error) {
         console.error('Admin invite generation error:', error);
-        req.flash('error', 'Failed to generate invite code.');
+        req.flash('toast_notification', JSON.stringify({ type: 'error', message: 'Failed to generate invite code.' }));
         res.redirect('/admin');
     }
 });
@@ -152,20 +170,51 @@ router.post('/delete-invite/:id', async (req, res) => {
     const inviteId = req.params.id;
     try {
         await db.execute('DELETE FROM invite_codes WHERE id = ?', [inviteId]);
-        req.flash('success', 'Invite code has been deleted.');
+        req.flash('toast_notification', JSON.stringify({ type: 'success', message: 'Invite code has been deleted.' }));
         res.redirect('/admin');
     } catch (error) {
         console.error('Delete invite error:', error);
-        req.flash('error', 'Failed to delete invite code.');
+        req.flash('toast_notification', JSON.stringify({ type: 'error', message: 'Failed to delete invite code.' }));
         res.redirect('/admin');
     }
 });
 
+// NEW: Grant an achievement to a user
+router.post('/grant-achievement', async (req, res) => {
+    const { userId, achievementId } = req.body;
+    try {
+        await db.execute(
+            'INSERT IGNORE INTO user_achievements (user_id, achievement_id) VALUES (?, ?)',
+            [userId, achievementId]
+        );
+        req.flash('toast_notification', JSON.stringify({ type: 'success', message: 'Achievement granted.' }));
+    } catch (error) {
+        console.error('Error granting achievement:', error);
+        req.flash('toast_notification', JSON.stringify({ type: 'error', message: 'Failed to grant achievement.' }));
+    }
+    res.redirect('/admin');
+});
+
+// NEW: Revoke an achievement from a user
+router.post('/revoke-achievement', async (req, res) => {
+    const { userId, achievementId } = req.body;
+    try {
+        await db.execute(
+            'DELETE FROM user_achievements WHERE user_id = ? AND achievement_id = ?',
+            [userId, achievementId]
+        );
+        req.flash('toast_notification', JSON.stringify({ type: 'success', message: 'Achievement revoked.' }));
+    } catch (error) {
+        console.error('Error revoking achievement:', error);
+        req.flash('toast_notification', JSON.stringify({ type: 'error', message: 'Failed to revoke achievement.' }));
+    }
+    res.redirect('/admin');
+});
 
 // POST /admin/purge-cache
 router.post('/purge-cache', (req, res) => {
     cache.clear();
-    req.flash('success', 'Server cache has been successfully purged.');
+    req.flash('toast_notification', JSON.stringify({ type: 'success', message: 'Server cache has been successfully purged.' }));
     res.redirect('/admin');
 });
 
@@ -176,22 +225,22 @@ router.post('/edit-user/:id', async (req, res) => {
     const permLevelInt = parseInt(permission_level, 10);
 
     if (parseInt(userIdToEdit, 10) === req.session.user.id) {
-        req.flash('error', 'You cannot change your own permission level.');
+        req.flash('toast_notification', JSON.stringify({ type: 'error', message: 'You cannot change your own permission level.' }));
         return res.redirect('/admin');
     }
 
     if (![0, 1, 5].includes(permLevelInt)) {
-        req.flash('error', 'Invalid permission level selected.');
+        req.flash('toast_notification', JSON.stringify({ type: 'error', message: 'Invalid permission level selected.' }));
         return res.redirect('/admin');
     }
 
     try {
         await db.execute('UPDATE users SET permission_level = ? WHERE id = ?', [permLevelInt, userIdToEdit]);
-        req.flash('success', 'User permissions updated.');
+        req.flash('toast_notification', JSON.stringify({ type: 'success', message: 'User permissions updated.' }));
         res.redirect('/admin');
     } catch (error) {
         console.error('Edit user error:', error);
-        req.flash('error', 'An error occurred while updating user.');
+        req.flash('toast_notification', JSON.stringify({ type: 'error', message: 'An error occurred while updating user.' }));
         res.redirect('/admin');
     }
 });
@@ -201,17 +250,17 @@ router.post('/delete-user/:id', async (req, res) => {
     const userIdToDelete = req.params.id;
 
     if (parseInt(userIdToDelete, 10) === req.session.user.id) {
-        req.flash('error', 'You cannot delete your own account.');
+        req.flash('toast_notification', JSON.stringify({ type: 'error', message: 'You cannot delete your own account.' }));
         return res.redirect('/admin');
     }
 
     try {
         await db.execute('DELETE FROM users WHERE id = ?', [userIdToDelete]);
-        req.flash('success', 'User has been deleted.');
+        req.flash('toast_notification', JSON.stringify({ type: 'success', message: 'User has been deleted.' }));
         res.redirect('/admin');
     } catch (error) {
         console.error('Delete user error:', error);
-        req.flash('error', 'An error occurred while deleting user.');
+        req.flash('toast_notification', JSON.stringify({ type: 'error', message: 'An error occurred while deleting user.' }));
         res.redirect('/admin');
     }
 });

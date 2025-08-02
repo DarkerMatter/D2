@@ -9,6 +9,7 @@ const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
 const accountRoutes = require('./routes/account');
 const dashboardRoutes = require('./routes/dashboard');
+const sessionRoutes = require('./routes/session'); // Import the session router
 const leaderboardRoutes = require('./routes/leaderboard');
 const { getLeaderboardData } = require('./services/leaderboardService');
 
@@ -17,12 +18,9 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // --- Trust the Nginx reverse proxy ---
-// This is the key to making the whole system work.
-// It allows Express to correctly determine if a connection is secure.
 app.set('trust proxy', 1);
 
 // --- Diagnostic Middleware ---
-// This is helpful for debugging on the production server.
 if (process.env.NODE_ENV === 'production') {
     app.use((req, res, next) => {
         if (req.path === '/login' || req.path === '/register') {
@@ -46,18 +44,13 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.set('view engine', 'pug');
 app.set('views', path.join(__dirname, 'views'));
 
-// --- FIX: Simplified and Robust Session Setup ---
+// --- Session Setup ---
 app.use(session({
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
-    // The `proxy` setting ensures that the 'secure' cookie setting will be
-    // determined by the X-Forwarded-Proto header.
     proxy: true,
     cookie: {
-        // By REMOVING the 'secure' property, it defaults to 'auto'.
-        // 'auto' sets secure=true if req.secure is true (behind a trusted HTTPS proxy)
-        // and secure=false otherwise (local HTTP development). This is exactly what you need.
         httpOnly: true,
         maxAge: 1000 * 60 * 60 * 24 // 1 day
     }
@@ -67,8 +60,7 @@ app.use(session({
 app.use(flash());
 app.use((req, res, next) => {
     res.locals.user = req.session.user || null;
-    res.locals.success = req.flash('success');
-    res.locals.error = req.flash('error');
+    res.locals.messages = req.flash();
     next();
 });
 
@@ -77,21 +69,18 @@ app.use('/', authRoutes);
 app.use('/admin', adminRoutes);
 app.use('/account', accountRoutes);
 app.use('/dashboard', dashboardRoutes);
-app.use('/leaderboard', leaderboardRoutes); // 2. Use the new route
+app.use('/session', sessionRoutes); // Mount the session router
+app.use('/leaderboard', leaderboardRoutes);
 
 
 // Root route now always renders the home page.
 app.get('/', async (req, res, next) => {
     try {
-        // --- FIX: Add headers to prevent browser caching ---
         res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
         res.setHeader('Pragma', 'no-cache');
         res.setHeader('Expires', '0');
-        // ----------------------------------------------------
 
-        // Get data from our service (it will be cached)
         const { rageLeaders } = await getLeaderboardData();
-        // The top rager is just the first person in the list
         const topRager = rageLeaders.length > 0 ? rageLeaders[0] : null;
 
         res.render('home', { topRager });

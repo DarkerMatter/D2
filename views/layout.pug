@@ -18,6 +18,8 @@ html(lang="en")
     link(rel="stylesheet", href="/css/components.css")
     link(rel="stylesheet", href="/css/pages.css")
     link(rel="stylesheet", href="/css/animations.css")
+    //- Bootstrap Icons for achievements
+    link(rel="stylesheet", href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css")
 
   body.loading
     //- Loader Animation HTML
@@ -47,25 +49,7 @@ html(lang="en")
             li
               a(href="/login") Login
       main
-        //- Container for our custom flash messages
-        .flash-messages-container
-          if success && success.length > 0
-            each msg in success
-              .flash-message.flash-success
-                .flash-icon ✔
-                .flash-content
-                  strong Success
-                  p= msg
-                button.flash-close(type="button") &times;
-          if error && error.length > 0
-            each msg in error
-              .flash-message.flash-error
-                .flash-icon ✖
-                .flash-content
-                  strong Error
-                  p= msg
-                button.flash-close(type="button") &times;
-
+        //- FIX: The old flash message container has been removed.
         block content
       footer
         .footer-links
@@ -74,15 +58,17 @@ html(lang="en")
           a(href="https://github.com/DarkerMatter/D2", target="_blank", rel="noopener noreferrer") GitHub
         p &copy; 2025 FTSGG LLC
 
-    //- FIX: Modal HTML is now a direct child of the body, outside the main container
+    //- Modal HTML is now a direct child of the body, outside the main container
     #confirmation-modal.modal-overlay.hidden
-      //- FIX: The dialog is now correctly nested inside the overlay
       .modal-dialog
         h3.modal-title Confirmation Required
         p.modal-body Are you sure you want to proceed with this action?
         .modal-actions
           button.btn-secondary#modal-cancel-btn Cancel
           button.btn-danger#modal-confirm-btn Confirm
+
+    //- NEW: This container will now hold ALL notifications.
+    #toast-container
 
     //- Chart.js library from CDN
     script(src="https://cdn.jsdelivr.net/npm/chart.js")
@@ -114,64 +100,97 @@ html(lang="en")
           });
         });
 
-        // --- 2. Logic to make flash messages dismissible ---
-        const closeButtons = document.querySelectorAll('.flash-close');
-        closeButtons.forEach(button => {
-          button.addEventListener('click', () => {
-            const message = button.closest('.flash-message');
-            message.classList.add('is-hiding');
-            // Remove the element from the DOM after the animation completes
-            message.addEventListener('transitionend', () => message.remove());
-          });
-        });
-
-        // --- 3. Reusable Custom Confirmation Modal Logic ---
+        // --- 2. Reusable Custom Confirmation Modal Logic ---
         const modal = document.getElementById('confirmation-modal');
         if (modal) {
           const modalTitle = modal.querySelector('.modal-title');
           const modalBody = modal.querySelector('.modal-body');
           const confirmBtn = document.getElementById('modal-confirm-btn');
           const cancelBtn = document.getElementById('modal-cancel-btn');
-          let formToSubmit = null; // Variable to hold the form that needs submitting
+          let formToSubmit = null;
 
-          // Find all forms that require confirmation via a data attribute
           document.querySelectorAll('form[data-confirm]').forEach(form => {
             form.addEventListener('submit', (e) => {
-              e.preventDefault(); // Prevent the form from submitting immediately
+              e.preventDefault();
               formToSubmit = e.target;
-
-              // Get custom messages from the form's data attributes
-              const title = form.dataset.confirmTitle || 'Confirmation Required';
-              const message = form.dataset.confirm;
-
-              // Populate and show the modal
-              modalTitle.textContent = title;
-              modalBody.textContent = message;
+              modalTitle.textContent = form.dataset.confirmTitle || 'Confirmation Required';
+              modalBody.textContent = form.dataset.confirm;
               modal.classList.remove('hidden');
             });
           });
 
-          // Function to hide the modal
           const hideModal = () => {
             modal.classList.add('hidden');
-            formToSubmit = null; // Clear the stored form
+            formToSubmit = null;
           };
 
-          // If the user clicks the final "Confirm" button, submit the stored form
           confirmBtn.addEventListener('click', () => {
             if (formToSubmit) {
               formToSubmit.submit();
             }
           });
 
-          // Add event listeners to hide the modal
           cancelBtn.addEventListener('click', hideModal);
           modal.addEventListener('click', (e) => {
-            // Hide if the user clicks on the dark overlay background
             if (e.target === modal) {
               hideModal();
             }
           });
+        }
+
+        // --- 3. NEW: Unified Toast Notification Logic ---
+        const toastContainer = document.getElementById('toast-container');
+        if (toastContainer) {
+          // This single function creates any type of toast
+          const showToast = (toastData) => {
+            const toast = document.createElement('div');
+            toast.className = `toast-notification toast-${toastData.type}`;
+
+            const icons = {
+              success: 'bi-check-circle-fill',
+              error: 'bi-exclamation-triangle-fill',
+              achievement: toastData.icon || 'bi-trophy-fill'
+            };
+
+            const titles = {
+              success: 'Success',
+              error: 'Error',
+              achievement: 'Achievement Unlocked!'
+            };
+
+            const message = toastData.type === 'achievement' ? toastData.name : toastData.message;
+            const description = toastData.type === 'achievement' ? `<div class="toast-description">${toastData.description}</div>` : '';
+
+            toast.innerHTML = `
+              <div class="toast-icon"><i class="bi ${icons[toastData.type]}"></i></div>
+              <div class="toast-content">
+                  <div class="toast-title">${titles[toastData.type]}</div>
+                  <div class="toast-message">${message}</div>
+                  ${description}
+              </div>
+            `;
+
+            toastContainer.appendChild(toast);
+            setTimeout(() => toast.classList.add('show'), 100);
+
+            setTimeout(() => {
+              toast.classList.remove('show');
+              toast.addEventListener('transitionend', () => toast.remove());
+            }, 5000);
+          };
+
+          // Check for the single 'toast_notification' flash message array
+          const allToasts = !{JSON.stringify(messages.toast_notification || [])};
+          if (allToasts && allToasts.length > 0) {
+            allToasts.forEach(toastJSON => {
+              try {
+                const toastData = JSON.parse(toastJSON);
+                showToast(toastData);
+              } catch (e) {
+                console.error('Failed to parse toast data:', e);
+              }
+            });
+          }
         }
       });
 
