@@ -1,6 +1,6 @@
 # D2 Rage Counter
 
-A web application built with Node.js and Express, designed for gamers to track their frustration, deaths, and "rage moments" during gaming sessions. It provides detailed statistics, session management, and data visualization to turn tilting into tangible data.
+A web application built with Node.js and Express, designed for me to to track my pain and suffering in Destiny 2. It provides detailed statistics, session management, and data visualization to turn tilting into tangible data.
 
 ---
 
