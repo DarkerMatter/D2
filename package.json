@@ -9,12 +9,10 @@
     "db:migrate:remote": "wrangler d1 migrations apply rage-tracker-db --remote"
   },
   "dependencies": {
-    "bcryptjs": "^2.4.3",
     "hono": "^4.7.0"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20241224.0",
-    "@types/bcryptjs": "^2.4.6",
     "typescript": "^5.7.0",
     "wrangler": "^3.99.0"
   }

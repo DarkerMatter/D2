@@ -103,6 +103,16 @@ button:disabled:hover {
     box-shadow: 0 4px 12px var(--accent-glow);
 }
 
+.btn-discord {
+    background-color: #5865F2;
+    color: white;
+    font-weight: 600;
+}
+.btn-discord:hover:not(:disabled) {
+    background-color: #4752c4;
+    box-shadow: 0 4px 16px rgba(88, 101, 242, 0.3);
+}
+
 .btn-secondary {
     background-color: var(--bg-surface);
     border: 1px solid var(--border-color);
