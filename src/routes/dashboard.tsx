@@ -38,7 +38,7 @@ dashboardRoutes.get('/', async (c) => {
     .all()
 
   const games = await c.env.DB.prepare(
-    'SELECT id, name, slug FROM games WHERE is_active = 1 ORDER BY name'
+    'SELECT id, name, slug, icon, color FROM games WHERE is_active = 1 ORDER BY name'
   ).all()
 
   return c.html(

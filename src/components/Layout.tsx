@@ -61,15 +61,6 @@ export const Layout: FC<LayoutProps> = ({
               <li>
                 <a href="/leaderboard">Leaderboard</a>
               </li>
-              <li>
-                <a
-                  href="https://fts.gg/discord"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Discord
-                </a>
-              </li>
               {user ? (
                 <>
                   <li>
