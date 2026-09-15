@@ -196,6 +196,50 @@
     border-radius: var(--radius-lg);
     background: var(--card-bg);
 }
+
+/* --- game picker. buttons > dropdowns. fight me. --- */
+.game-picker {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 0.5rem;
+}
+
+.game-pick-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 0.9rem;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 500;
+    font-family: inherit;
+    transition: all 0.15s ease;
+    justify-content: center;
+}
+
+.game-pick-btn i {
+    font-size: 1rem;
+}
+
+.game-pick-btn:hover:not(.selected) {
+    border-color: var(--border-hover);
+    color: var(--text-color);
+    background: var(--card-bg);
+    transform: translateY(-1px);
+    box-shadow: none;
+}
+
+.game-pick-btn.selected {
+    border-color: var(--game-color);
+    color: var(--game-color);
+    background: color-mix(in srgb, var(--game-color) 8%, var(--bg-surface));
+    box-shadow: 0 0 12px color-mix(in srgb, var(--game-color) 15%, transparent);
+    font-weight: 600;
+}
 .session-item-wrapper {
     position: relative;
     border-radius: var(--radius);
