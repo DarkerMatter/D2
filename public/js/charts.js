@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-  // --- Rage Progression Chart ---
+  // --- rage progression chart. watch your anger issues in beautiful line graph form ---
   const generateBtn = document.getElementById('generateChartBtn');
   const canvas = document.getElementById('rageProgressionChart');
   if (generateBtn && canvas) {
@@ -79,7 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // --- Swear Word Chart ---
+  // --- swear word frequency chart. yes this is a real feature i built at 2am and no i will not apologize ---
   const swearBtn = document.getElementById('generateSwearChartBtn');
   const swearCanvas = document.getElementById('swearWordChart');
   if (swearBtn && swearCanvas) {
@@ -167,7 +167,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // --- Copy to Clipboard ---
+  // --- copy invite codes to clipboard. navigator.clipboard works in 2025 thank god ---
   document.querySelectorAll('.btn-copy').forEach((button) => {
     button.addEventListener('click', () => {
       const code = button.dataset.code;

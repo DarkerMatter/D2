@@ -27,7 +27,7 @@ export const AdminPage: FC<AdminProps> = ({
   <div class="admin-container">
     <h2>Admin Panel</h2>
 
-    {/* App Stats */}
+    {/* the numbers that tell you how much collective suffering your platform has caused */}
     <div class="admin-section-card">
       <h3>App Stats</h3>
       <div class="metrics-grid">
@@ -54,7 +54,7 @@ export const AdminPage: FC<AdminProps> = ({
       </div>
     </div>
 
-    {/* Game Management */}
+    {/* add games, disable games, watch people rage at new games */}
     <div class="admin-section-card">
       <h3>Game Management</h3>
       <form
@@ -148,7 +148,7 @@ export const AdminPage: FC<AdminProps> = ({
       </div>
     </div>
 
-    {/* Create User */}
+    {/* make someone a new account so they can start suffering too */}
     <div class="admin-section-card">
       <h3>Create New User</h3>
       <form action="/admin/create-user" method="post" class="user-creation-form">
@@ -177,7 +177,7 @@ export const AdminPage: FC<AdminProps> = ({
       </form>
     </div>
 
-    {/* Manage Users */}
+    {/* the god complex section. ban people, delete people, grant achievements */}
     <div class="admin-section-card">
       <h3>Manage Users</h3>
       <div class="user-table-container">
@@ -276,7 +276,7 @@ export const AdminPage: FC<AdminProps> = ({
       </div>
     </div>
 
-    {/* Invite Code Management */}
+    {/* invite codes, because misery loves company */}
     <div class="admin-section-card">
       <h3>Invite Code Management</h3>
       <div class="invite-management-actions">
@@ -345,7 +345,7 @@ export const AdminPage: FC<AdminProps> = ({
       </div>
     </div>
 
-    {/* Cache Management */}
+    {/* nuke the cache when the leaderboard is being a liar */}
     <div class="admin-section-card">
       <h3>Cache Management</h3>
       <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">

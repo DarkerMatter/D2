@@ -1,4 +1,4 @@
-/* public/css/base.css */
+/* base styles. touch these variables and everything breaks. don't ask how i know. */
 
 :root {
     --bg-color: #000000;

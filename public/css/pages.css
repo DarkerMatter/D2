@@ -1,6 +1,6 @@
-/* public/css/pages.css */
+/* page-specific styles. this file is way too long and i don't care. */
 
-/* --- Page-specific Containers --- */
+/* --- containers. the boxes that hold other boxes. web development is just boxes. --- */
 .form-container,
 .dashboard-container,
 .admin-container,
@@ -12,7 +12,7 @@
     margin-top: 2rem;
 }
 
-/* --- Home Page --- */
+/* --- home page. the "please use our app" page --- */
 .home-container {
     text-align: center;
     padding: 4rem 2rem;
@@ -56,7 +56,7 @@
     color: var(--text-secondary);
 }
 
-/* --- Dashboard & Session Pages --- */
+/* --- dashboard & session pages. where the actual suffering gets tracked --- */
 .session-container h2 {
     border-bottom: none;
     margin-bottom: 0.25rem;
@@ -65,9 +65,9 @@
 .session-meta {
     display: flex;
     align-items: center;
-    gap: 1.5rem; /* Provides nice spacing between status and death count */
+    gap: 1.5rem; /* breathing room between status badge and death count */
     font-size: 0.9rem;
-    white-space: nowrap; /* Prevents text from wrapping */
+    white-space: nowrap; /* DO NOT wrap. it looks terrible. i tried. */
 }
 
 .session-actions {
@@ -225,7 +225,7 @@
     line-height: 1;
 }
 
-/* --- FIX: Selected button color is now orange and stays orange on hover/focus --- */
+/* --- selected button stays orange. this took 3 attempts to get right because CSS specificity is a war crime --- */
 .choice-btn.selected,
 .choice-btn.selected:hover,
 .choice-btn.selected:focus,
@@ -234,25 +234,25 @@
     color: white;
     border-color: var(--accent-orange);
     font-weight: 700;
-    outline: none; /* Explicitly remove outline for selected items */
+    outline: none; /* kill the ugly blue outline. accessibility people don't @ me, focus-visible is below */
 }
 
-/* This removes the default blue outline on click for mouse users */
+/* no outline on click for mouse users, you don't need it */
 .choice-btn:focus {
     outline: none;
 }
 
-/* This adds a clear focus ring ONLY for keyboard users for accessibility */
+/* keyboard users get an orange ring. accessibility matters even at 2am */
 .choice-btn:focus-visible {
     outline: 2px solid var(--accent-orange);
     outline-offset: 2px;
 }
 
 .quick-phrase-grid {
-    margin-bottom: 1rem; /* Space between quick phrases and the input box */
+    margin-bottom: 1rem; /* gap between quick phrases and the text input. looks weird without it */
 }
 
-/* --- NEW: Red Rage Slider Styles --- */
+/* --- rage slider. red because of course it's red --- */
 .rage-slider-container {
     display: flex;
     align-items: center;
@@ -264,7 +264,7 @@
     font-size: 1.8rem;
     font-weight: 700;
     color: var(--error-border);
-    min-width: 2ch; /* Prevents layout shift when number changes */
+    min-width: 2ch; /* stops the number from making everything jump when it goes from 9 to 10 */
     text-align: center;
 }
 
@@ -279,7 +279,7 @@ input[type="range"] {
     cursor: pointer;
 }
 
-/* Slider Thumb (the draggable part) */
+/* the draggable circle. cross-browser styling this was a nightmare */
 input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
@@ -289,7 +289,7 @@ input[type="range"]::-webkit-slider-thumb {
     border-radius: 50%;
     border: 3px solid var(--container-bg);
     box-shadow: 0 0 5px rgba(0,0,0,0.5);
-    margin-top: -8px; /* Center the thumb on the track */
+    margin-top: -8px; /* vertically center this thing. webkit why are you like this */
     transition: transform 0.2s ease;
 }
 input[type="range"]::-moz-range-thumb {
@@ -308,13 +308,13 @@ input[type="range"]:hover::-webkit-slider-thumb {
 #session-title {
     display: flex;
     align-items: baseline;
-    gap: 1rem; /* Increased gap for status badge */
+    gap: 1rem; /* space for the status badge */
     flex-wrap: wrap;
     margin-bottom: 0;
 }
 
 #session-date-container {
-    margin-bottom: 2rem; /* Add space below the date */
+    margin-bottom: 2rem; /* breathing room under the date */
 }
 
 #session-name-display {
@@ -346,7 +346,7 @@ input[type="range"]:hover::-webkit-slider-thumb {
 }
 
 .session-actions {
-    justify-content: space-between; /* Align items to the edges */
+    justify-content: space-between; /* push buttons to opposite ends */
 }
 
 .session-actions form {
@@ -397,7 +397,7 @@ input[type="range"]:hover::-webkit-slider-thumb {
     cursor: not-allowed;
 }
 
-/* --- Account/Settings Page --- */
+/* --- account page. stats, phrases, achievements, danger zone --- */
 .danger-zone {
     background-color: var(--delete-bg);
     border: 1px solid var(--error-border);
@@ -432,7 +432,7 @@ input[type="range"]:hover::-webkit-slider-thumb {
     }
 }
 
-/* --- Admin Page --- */
+/* --- admin page. the power trip section --- */
 
 .admin-section-card {
     background: var(--container-bg);
@@ -580,7 +580,7 @@ input[type="range"]:hover::-webkit-slider-thumb {
     max-width: 60ch;
 }
 
-/* --- Leaderboard Page --- */
+/* --- leaderboard. hall of shame --- */
 .leaderboard-container > p {
     color: var(--text-secondary);
     text-align: center;
@@ -637,14 +637,14 @@ input[type="range"]:hover::-webkit-slider-thumb {
         grid-template-columns: 1fr 1fr;
     }
 }
-/* --- Account/Settings Page --- */
+/* --- chart containers. dark bg for contrast because charts on black look terrible --- */
 .chart-container {
     margin-top: 3rem;
-    padding: 2rem; /* Increased padding */
-    background-color: #0a0a0a; /* Slightly different bg for contrast */
+    padding: 2rem; /* more padding because the chart was suffocating */
+    background-color: #0a0a0a; /* slightly lighter than pure black so charts don't blend in */
     border: 1px solid var(--border-color);
     border-radius: 8px;
-    text-align: center; /* Center the button */
+    text-align: center; /* center the generate button */
 }
 
 .chart-container h4 {
@@ -658,7 +658,7 @@ input[type="range"]:hover::-webkit-slider-thumb {
     color: var(--text-secondary);
     font-size: 0.9rem;
     margin-top: 0;
-    margin-bottom: 2rem; /* Increased margin */
+    margin-bottom: 2rem; /* more space so the chart doesn't overlap the description */
     text-align: left;
 }
 
@@ -689,7 +689,7 @@ input[type="range"]:hover::-webkit-slider-thumb {
     color: var(--accent-orange);
 }
 
-/* --- NEW: Achievements --- */
+/* --- achievements. little badges of suffering --- */
 .achievements-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -743,11 +743,11 @@ input[type="range"]:hover::-webkit-slider-thumb {
     padding: 1rem !important;
 }
 
-/* --- Achievement Management (Admin Page) --- */
+/* --- admin achievement controls. grant and revoke with one click --- */
 .achievements-management {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem; /* Tighter gap for inline controls */
+    gap: 0.5rem; /* tight gap because these are inline */
     align-items: center;
 }
 
@@ -759,7 +759,7 @@ input[type="range"]:hover::-webkit-slider-thumb {
 }
 
 .achievements-management-form select {
-    min-width: 200px; /* Adjust width as needed */
+    min-width: 200px; /* wide enough to read the achievement names */
     flex-grow: 1;
 }
 
@@ -767,12 +767,12 @@ input[type="range"]:hover::-webkit-slider-thumb {
     border: 1px solid var(--border-color);
     color: white;
     cursor: pointer;
-    padding: 0.6rem 1rem; /* Match other form buttons */
+    padding: 0.6rem 1rem; /* match the other buttons so nothing looks janky */
     border-radius: 6px;
     font-size: 0.85rem;
     font-weight: 500;
     transition: all 0.2s ease;
-    flex-shrink: 0; /* Prevent buttons from shrinking */
+    flex-shrink: 0; /* do NOT shrink these buttons. they look pathetic when they shrink */
 }
 
 .btn-achievement.grantable {

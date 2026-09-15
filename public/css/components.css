@@ -1,6 +1,6 @@
-/* public/css/components.css */
+/* components. buttons, forms, modals, toasts. the building blocks of my insomnia. */
 
-/* --- Forms --- */
+/* --- forms. every input field styled by hand because i have trust issues with frameworks --- */
 .form-group {
     margin-bottom: 1.5rem;
 }
@@ -36,7 +36,7 @@ select:focus {
     box-shadow: 0 0 0 2px rgba(0, 112, 243, 0.3);
 }
 
-/* --- Buttons --- */
+/* --- buttons. translateY(-2px) on hover was worth the 45 minutes of tweaking --- */
 button, .btn {
     background-color: var(--accent-color);
     color: white;
@@ -103,7 +103,7 @@ button.delete-btn:hover:not(:disabled) {
     background-color: #a72836;
 }
 
-/* --- Custom Flash Message Alerts --- */
+/* --- flash messages. the fancy alert boxes that replaced my ugly redirects --- */
 .flash-messages-container {
     display: flex;
     flex-direction: column;
@@ -168,10 +168,10 @@ button.delete-btn:hover:not(:disabled) {
 }
 .flash-close:hover {
     color: var(--text-color);
-    transform: none; /* Override default button hover */
+    transform: none; /* stop the close button from bouncing. WHY was it bouncing. */
 }
 
-/* Success Variant */
+/* green = good. at least something went right for once */
 .flash-success {
     background-color: var(--success-bg);
     border-color: var(--success-border);
@@ -181,7 +181,7 @@ button.delete-btn:hover:not(:disabled) {
     color: var(--success-border);
 }
 
-/* Error Variant */
+/* red = bad. you'll be seeing a lot of this one */
 .flash-error {
     background-color: var(--error-bg);
     border-color: var(--error-border);
@@ -191,7 +191,7 @@ button.delete-btn:hover:not(:disabled) {
     color: var(--error-border);
 }
 
-/* --- Modals --- */
+/* --- modals. the "are you REALLY sure" dialogs --- */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -247,7 +247,7 @@ button.delete-btn:hover:not(:disabled) {
     gap: 1rem;
 }
 
-/* --- Choice Buttons (Session Page) --- */
+/* --- choice buttons for rage level and phrases. grid layout because flexbox betrayed me --- */
 .choice-grid {
     display: grid;
     gap: 10px;
@@ -291,7 +291,7 @@ button.choice-btn:hover:not(.selected) {
     font-weight: 700;
 }
 
-/* --- Toast Notifications --- */
+/* --- toast notifications. slide in from the right, disappear after 5 seconds. simple in theory, 2 hours in practice --- */
 #toast-container {
     position: fixed;
     bottom: 1.5rem;
@@ -348,7 +348,7 @@ button.choice-btn:hover:not(.selected) {
     margin-top: 0.25rem;
 }
 
-/* Toast Types */
+/* toast color variants. success=green, error=red, achievement=blue. revolutionary. */
 .toast-notification.toast-success {
     border-left-color: var(--success-border);
 }

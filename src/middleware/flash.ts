@@ -12,7 +12,7 @@ export const flashMiddleware: MiddlewareHandler<Env> = async (c, next) => {
   if (raw) {
     try {
       flash = JSON.parse(decodeURIComponent(raw))
-    } catch { /* ignore malformed cookie */ }
+    } catch { /* cookie is mangled garbage? cool, don't care, moving on */ }
     deleteCookie(c, FLASH_COOKIE, { path: '/' })
   }
   c.set('flash', flash)

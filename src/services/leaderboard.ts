@@ -1,5 +1,5 @@
 const CACHE_KEY = 'leaderboard'
-const CACHE_TTL = 300 // 5 minutes
+const CACHE_TTL = 300 // 5 minutes before it goes stale. any shorter and the DB cries, any longer and the data lies
 
 export async function getLeaderboardData(
   db: D1Database,

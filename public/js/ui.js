@@ -1,4 +1,4 @@
-// --- Page Loader ---
+// --- page loader. yes the spinny thing. it was broken for 4 hours because of a missing class ---
 window.addEventListener('load', () => {
   const loader = document.querySelector('.loader-wrapper');
   if (loader) {
@@ -8,7 +8,7 @@ window.addEventListener('load', () => {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
-  // --- Re-activate loader on heavy-page navigations ---
+  // --- show the spinner again when clicking heavy pages so it doesn't look like the site died ---
   const loader = document.querySelector('.loader-wrapper');
   const loadingLinks = document.querySelectorAll(
     'a[href="/dashboard"], a[href="/account"], a[href="/admin"]'
@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // --- Confirmation Modal ---
+  // --- "are you sure?" modal. because people WILL accidentally delete everything at 3am ---
   const modal = document.getElementById('confirmation-modal');
   if (modal) {
     const modalTitle = modal.querySelector('.modal-title');
@@ -57,7 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // --- Toast Notifications ---
+  // --- toast popups. built with textContent not innerHTML because i actually care about XSS now ---
   const toastContainer = document.getElementById('toast-container');
   if (toastContainer) {
     const showToast = (toastData) => {
@@ -126,7 +126,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // --- Timestamp Formatting ---
+  // --- format timestamps client-side because server-side dates are a nightmare i refuse to deal with ---
   document.querySelectorAll('[data-timestamp]').forEach((el) => {
     const ts = el.getAttribute('data-timestamp');
     if (ts) el.textContent = new Date(ts).toLocaleString();

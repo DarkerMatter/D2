@@ -14,10 +14,10 @@ import { ErrorPage } from './components/pages/Error'
 
 const app = new Hono<Env>()
 
-// Flash middleware on all routes (also sets default user to null)
+// this runs on EVERY request. yes, EVERY one. move it and enjoy your 3 hour debugging session
 app.use('*', flashMiddleware)
 
-// Home page
+// home page goes BEFORE route mounting or the auth routes eat it alive. ask me how i know.
 app.get('/', async (c) => {
   const { rageLeaders } = await getLeaderboardData(c.env.DB, c.env.CACHE)
   const topRager = rageLeaders.length > 0 ? rageLeaders[0] : null
@@ -37,7 +37,7 @@ app.get('/', async (c) => {
   )
 })
 
-// Mount route groups
+// mount all the routes. order matters here and i found out the hard way at 2am
 app.route('/', authRoutes)
 app.route('/dashboard', dashboardRoutes)
 app.route('/session', sessionRoutes)
@@ -45,7 +45,7 @@ app.route('/account', accountRoutes)
 app.route('/admin', adminRoutes)
 app.route('/leaderboard', leaderboardRoutes)
 
-// 404
+// congrats you found a page that doesn't exist. honestly same.
 app.notFound((c) => {
   return c.html(
     <Layout
@@ -61,7 +61,7 @@ app.notFound((c) => {
   )
 })
 
-// Global error handler
+// when everything goes to hell, this catches the pieces. somehow.
 app.onError((err, c) => {
   console.error('Error:', err)
   return c.html(

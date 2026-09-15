@@ -3,7 +3,7 @@ import * as bcrypt from 'bcryptjs'
 import type { JWTPayload } from '../types'
 
 const SALT_ROUNDS = 10
-const TOKEN_EXPIRY = 24 * 60 * 60 // 1 day
+const TOKEN_EXPIRY = 24 * 60 * 60 // 24 hours. if you're still logged in after that, something is wrong with your life
 
 export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, SALT_ROUNDS)

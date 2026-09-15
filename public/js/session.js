@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-  // --- Rage Slider ---
+  // --- rage slider. 1 to 10. if you need higher than 10 you have bigger problems ---
   const rageSlider = document.getElementById('rageSlider');
   const rageValue = document.getElementById('rageValue');
   const hiddenInput = document.querySelector('input[name="rageLevel"]');
@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // --- Quick Phrase Selection ---
+  // --- quick phrases so you don't have to type the same swear word every single time ---
   const phraseButtons = document.querySelectorAll('.quick-phrase');
   const phraseInput = document.getElementById('ragePhraseInput');
 

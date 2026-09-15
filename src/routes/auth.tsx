@@ -98,7 +98,7 @@ authRoutes.post('/register', async (c) => {
     return redirectWithFlash(c, '/register')
   }
 
-  // Validate invite code
+  // does this invite code even exist or are they just making stuff up
   const invite = await c.env.DB.prepare(
     'SELECT id, used_by_user_id FROM invite_codes WHERE code = ?'
   )
@@ -117,7 +117,7 @@ authRoutes.post('/register', async (c) => {
     return redirectWithFlash(c, '/register')
   }
 
-  // Check username uniqueness
+  // someone already took this name? of course they did
   const existing = await c.env.DB.prepare(
     'SELECT id FROM users WHERE username = ?'
   )
@@ -128,7 +128,7 @@ authRoutes.post('/register', async (c) => {
     return redirectWithFlash(c, '/register')
   }
 
-  // Create user
+  // FINALLY just make the account already
   const hashedPassword = await hashPassword(password)
   const userResult = await c.env.DB.prepare(
     'INSERT INTO users (username, password, permission_level) VALUES (?, ?, 1)'
@@ -138,14 +138,14 @@ authRoutes.post('/register', async (c) => {
 
   const newUserId = userResult.meta.last_row_id as number
 
-  // Mark invite as used
+  // burn the invite code. one and done.
   await c.env.DB.prepare(
     "UPDATE invite_codes SET used_by_user_id = ?, used_at = datetime('now') WHERE id = ?"
   )
     .bind(newUserId, invite.id)
     .run()
 
-  // Auto-login
+  // log them in immediately because making them log in again after registering is actual insanity
   const sessionId = crypto.randomUUID()
   const token = await createToken(
     { userId: newUserId, username, permissionLevel: 1, sessionId },

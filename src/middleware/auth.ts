@@ -20,7 +20,7 @@ export const isAuthenticated: MiddlewareHandler<Env> = async (c, next) => {
     return redirectWithFlash(c, '/login')
   }
 
-  // Check KV for revoked sessions
+  // check the ban list. trust nobody, not even the JWT.
   const revoked = await c.env.SESSIONS.get(`revoked:${payload.sessionId}`)
   if (revoked) {
     deleteCookie(c, AUTH_COOKIE, { path: '/' })
@@ -28,7 +28,7 @@ export const isAuthenticated: MiddlewareHandler<Env> = async (c, next) => {
     return redirectWithFlash(c, '/login')
   }
 
-  // Live DB check for ban/deletion
+  // STILL don't trust it. hit the actual database because people get banned mid-session and i'm not dealing with that bug again
   const user = await c.env.DB.prepare(
     'SELECT id, username, permission_level FROM users WHERE id = ?'
   )

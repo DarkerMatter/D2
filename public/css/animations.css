@@ -1,6 +1,6 @@
-/* public/css/animations.css */
+/* animations. because staring at a blank screen while data loads is unacceptable. */
 
-/* --- Page Load Animation --- */
+/* --- page loader spinner. took forever to center this stupid thing --- */
 body.loading .container {
     visibility: hidden;
     opacity: 0;
@@ -40,7 +40,7 @@ body.loading .container {
 }
 
 
-/* --- Stat Card Update Animation --- */
+/* --- stat card wipe animation. looks cool, was pain to implement --- */
 .stat-card.is-updating::after {
     content: '';
     position: absolute;
@@ -72,7 +72,7 @@ body.loading .container {
     100% { opacity: 1; }
 }
 
-/* --- Session Item Delete Animation --- */
+/* --- slide-to-delete animation. surprisingly the one thing that worked first try --- */
 .session-item-wrapper.is-deleting .session-item {
     transform: translateX(-120px);
     border-color: var(--accent-color);

@@ -71,19 +71,19 @@ export async function checkAllAchievementsOnSessionEnd(
   const sessionStart = new Date(session.created_at)
   const sessionEnd = new Date(session.ended_at)
 
-  // --- Achievements requiring deaths ---
+  // --- ok you died, time to check if your suffering earned you anything ---
   if (deathCount > 0) {
     if (logs.some((l: any) => l.rage_level === 10)) {
-      await grantAchievement(c, userId, 2) // Maximum Over-Rage
+      await grantAchievement(c, userId, 2) // you maxed out the rage slider you absolute psycho
     }
     if (logs.some((l: any) => new Date(l.created_at).getDay() === 0)) {
-      await grantAchievement(c, userId, 4) // The Cycle of Pain
+      await grantAchievement(c, userId, 4) // dying on a sunday. the lord's day. incredible.
     }
     const timeDiff =
       (new Date(firstDeath.created_at).getTime() - sessionStart.getTime()) /
       1000
     if (timeDiff <= 62) {
-      await grantAchievement(c, userId, 8) // Speed Run
+      await grantAchievement(c, userId, 8) // died in under a minute. genuinely impressive.
     }
     if (
       logs.some((l: any) => {
@@ -91,47 +91,47 @@ export async function checkAllAchievementsOnSessionEnd(
         return hour >= 1 && hour < 4
       })
     ) {
-      await grantAchievement(c, userId, 11) // Night Owl
+      await grantAchievement(c, userId, 11) // WHY are you gaming between 1-4 AM. go to BED.
     }
     if (deathCount >= 3) {
       const uniquePhrases = new Set(logs.map((l: any) => l.rage_phrase))
       if (uniquePhrases.size === 1) {
-        await grantAchievement(c, userId, 12) // The Specialist
+        await grantAchievement(c, userId, 12) // said the same thing 3+ times. broken record.
       }
     }
     const durationAfterFirst =
       (sessionEnd.getTime() - new Date(firstDeath.created_at).getTime()) /
       (1000 * 60)
     if (durationAfterFirst <= 5) {
-      await grantAchievement(c, userId, 13) // Rage Quit
+      await grantAchievement(c, userId, 13) // quit within 5 min of first death. understandable honestly
     }
     const offensiveRegex =
       /\b(fuck(er|ing)?|shit(ty)?|bitch|ass(hole)?|whore|damn(it)?)\b/i
     if (logs.some((l: any) => offensiveRegex.test(l.rage_phrase))) {
-      await grantAchievement(c, userId, 15) // Tilted
+      await grantAchievement(c, userId, 15) // dropped a swear word. can't say i blame you
     }
   }
 
-  // --- Zero-death achievements ---
+  // --- somehow didn't die?? suspicious but ok ---
   if (deathCount === 0) {
-    await grantAchievement(c, userId, 5) // Flawless Victory
+    await grantAchievement(c, userId, 5) // zero deaths. were you even playing or just afk
     const sessionHours =
       (sessionEnd.getTime() - sessionStart.getTime()) / (1000 * 60 * 60)
     if (sessionHours > 1) {
-      await grantAchievement(c, userId, 14) // The Pacifist
+      await grantAchievement(c, userId, 14) // 1+ hour and zero deaths. seriously what game is this
     }
   }
 
   if (deathCount > 20) {
-    await grantAchievement(c, userId, 9) // Marathon of Misery
+    await grantAchievement(c, userId, 9) // 20+ deaths in one session. genuinely seek help
   }
 
-  // --- Aggregate achievements ---
+  // --- lifetime suffering milestones. congrats i guess ---
   if (deathCount > 0 && userStats.total_deaths === deathCount) {
-    await grantAchievement(c, userId, 1) // First Blood
+    await grantAchievement(c, userId, 1) // your very first death ever. welcome to hell
   }
   if (userStats.total_deaths >= 100) {
-    await grantAchievement(c, userId, 3) // Centurion
+    await grantAchievement(c, userId, 3) // 100 deaths total. at this point it's a career
   }
 
   const phraseCount = await db
@@ -141,10 +141,10 @@ export async function checkAllAchievementsOnSessionEnd(
     .bind(userId)
     .first<{ cnt: number }>()
   if (phraseCount && phraseCount.cnt >= 5) {
-    await grantAchievement(c, userId, 7) // Wordsmith of Fury
+    await grantAchievement(c, userId, 7) // 5+ unique phrases. at least you're creative about it
   }
 
   if (userStats.total_rage >= 1000) {
-    await grantAchievement(c, userId, 10) // The Collector
+    await grantAchievement(c, userId, 10) // 1000 rage points. i don't even have words anymore
   }
 }
