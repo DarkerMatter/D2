@@ -1,62 +1,89 @@
-/* public/css/pages.css */
+/* page-specific styles. this file is way too long and i don't care. */
 
-/* --- Page-specific Containers --- */
+/* --- containers. the boxes that hold other boxes. web development is just boxes. --- */
 .form-container,
 .dashboard-container,
 .admin-container,
 .leaderboard-container {
     background: var(--container-bg);
     border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 2rem;
+    border-radius: var(--radius-lg);
+    padding: clamp(1.5rem, 3vw, 2.5rem);
     margin-top: 2rem;
 }
 
-/* --- Home Page --- */
+.auth-form {
+    max-width: 440px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.auth-switch {
+    margin-top: 1.5rem;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+}
+
+.auth-switch a {
+    color: var(--accent-color);
+    font-weight: 500;
+}
+
+/* --- home page. the "please use our app" page --- */
 .home-container {
     text-align: center;
-    padding: 4rem 2rem;
+    padding: clamp(3rem, 8vw, 6rem) 2rem;
 }
 .hero-section h2 {
-    font-size: 2.8rem;
-    font-weight: 700;
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 800;
     border-bottom: none;
     margin-bottom: 1rem;
+    letter-spacing: -0.03em;
+    background: linear-gradient(135deg, var(--text-color) 0%, var(--text-secondary) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 .hero-section .subtitle {
-    font-size: 1.2rem;
+    font-size: clamp(1rem, 2vw, 1.15rem);
     color: var(--text-secondary);
-    max-width: 600px;
+    max-width: 640px;
     margin: 0 auto 2.5rem auto;
-    line-height: 1.6;
+    line-height: 1.7;
 }
 .top-rager-spotlight {
     margin: 3rem auto;
     padding: 2rem;
-    border: 1px solid var(--accent-orange);
-    border-radius: 8px;
-    background: linear-gradient(145deg, rgba(245, 166, 35, 0.05), rgba(245, 166, 35, 0.01));
-    max-width: 600px;
+    border: 1px solid rgba(245, 158, 11, 0.2);
+    border-radius: var(--radius-lg);
+    background: linear-gradient(145deg, rgba(245, 158, 11, 0.06), rgba(245, 158, 11, 0.01));
+    max-width: 550px;
+    backdrop-filter: blur(10px);
 }
 .top-rager-spotlight h3 {
     margin-top: 0;
     margin-bottom: 0.5rem;
     color: var(--accent-orange);
-    font-size: 1rem;
+    font-size: 0.8rem;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 2px;
+    font-weight: 600;
 }
 .top-rager-spotlight .champion-name {
     font-size: 2rem;
     font-weight: 700;
     margin: 0;
+    letter-spacing: -0.02em;
 }
 .top-rager-spotlight .champion-stats {
     margin: 0.25rem 0 0 0;
     color: var(--text-secondary);
+    font-size: 0.9rem;
 }
 
-/* --- Dashboard & Session Pages --- */
+/* --- dashboard & session pages. where the actual suffering gets tracked --- */
 .session-container h2 {
     border-bottom: none;
     margin-bottom: 0.25rem;
@@ -65,19 +92,20 @@
 .session-meta {
     display: flex;
     align-items: center;
-    gap: 1.5rem; /* Provides nice spacing between status and death count */
-    font-size: 0.9rem;
-    white-space: nowrap; /* Prevents text from wrapping */
+    gap: 1rem;
+    font-size: 0.85rem;
+    white-space: nowrap;
 }
 
 .session-actions {
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
     gap: 1rem;
     margin-top: 2rem;
     padding-top: 2rem;
     border-top: 1px solid var(--border-color);
+    flex-wrap: wrap;
 }
 
 .session-actions form {
@@ -86,31 +114,37 @@
 
 .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 3rem;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2.5rem;
 }
 .stat-card {
-    background: var(--container-bg);
+    background: var(--card-bg);
     border: 1px solid var(--border-color);
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     padding: 1.5rem;
     text-align: center;
-    height: 175px;
+    min-height: 150px;
     display: flex;
     flex-direction: column;
     justify-content: center;
     position: relative;
     overflow: hidden;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stat-card:hover {
+    border-color: var(--border-hover);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 
 .quick-phrase-prompt {
-    background-color: rgba(245, 166, 35, 0.05);
-    border: 1px solid rgba(245, 166, 35, 0.2);
-    border-radius: 6px;
+    background-color: rgba(245, 158, 11, 0.04);
+    border: 1px solid rgba(245, 158, 11, 0.15);
+    border-radius: var(--radius);
     padding: 0.75rem 1rem;
     margin-bottom: 1rem;
-    font-size: 0.9rem;
+    font-size: 0.875rem;
 }
 
 .quick-phrase-prompt p {
@@ -130,8 +164,11 @@
 
 .stat-card h3 {
     margin: 0 0 0.5rem 0;
-    font-weight: 700;
-    color: var(--text-secondary);
+    font-weight: 500;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 .stat-card p {
     margin: 0;
@@ -139,58 +176,118 @@
     transition: font-size 0.3s ease;
 }
 .stat-card .rage-score {
-    font-size: 3.5rem;
+    font-size: 3rem;
     font-weight: 700;
+    letter-spacing: -0.02em;
+    background: linear-gradient(135deg, var(--text-color), var(--text-secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 .stat-card .stat-value {
-    font-size: 1.8rem;
+    font-size: 1.5rem;
     font-weight: 500;
     word-wrap: break-word;
 }
 .session-creation-form {
     padding: 1.5rem;
-    margin-bottom: 2.5rem;
+    margin-bottom: 2rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    background: var(--card-bg);
+}
+
+/* --- game picker. buttons > dropdowns. fight me. --- */
+.game-picker {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 0.5rem;
+}
+
+.game-pick-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 0.9rem;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 500;
+    font-family: inherit;
+    transition: all 0.15s ease;
+    justify-content: center;
+}
+
+.game-pick-btn i {
+    font-size: 1rem;
+}
+
+.game-pick-btn:hover:not(.selected) {
+    border-color: var(--border-hover);
+    color: var(--text-color);
+    background: var(--card-bg);
+    transform: translateY(-1px);
+    box-shadow: none;
+}
+
+.game-pick-btn.selected {
+    border-color: var(--game-color);
+    color: var(--game-color);
+    background: color-mix(in srgb, var(--game-color) 8%, var(--bg-surface));
+    box-shadow: 0 0 12px color-mix(in srgb, var(--game-color) 15%, transparent);
+    font-weight: 600;
 }
 .session-item-wrapper {
     position: relative;
-    border-radius: 8px;
+    border-radius: var(--radius);
     overflow: hidden;
     transition: box-shadow 0.2s ease;
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
 }
 .session-item-wrapper:hover {
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
 }
 .session-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1.25rem;
-    background: var(--container-bg);
+    padding: 1rem 1.25rem;
+    background: var(--card-bg);
     border: 1px solid var(--border-color);
+    border-radius: var(--radius);
     text-decoration: none;
     color: var(--text-color);
     width: 100%;
     box-sizing: border-box;
-    transition: border-color 0.2s ease, transform 0.3s ease-in-out;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
 }
+
+.session-item:hover {
+    border-color: var(--border-hover);
+    background-color: rgba(255, 255, 255, 0.02);
+}
+
 .session-info {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: 0.2rem;
 }
 .session-name {
-    font-weight: 500;
-    font-size: 1.1rem;
+    font-weight: 550;
+    font-size: 1rem;
 }
 .session-date {
-    color: var(--text-secondary);
-    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-size: 0.8rem;
 }
 .session-deaths {
-    color: var(--text-secondary);
-    font-size: 0.9rem;
+    color: var(--text-muted);
+    font-size: 0.85rem;
     white-space: nowrap;
+    font-variant-numeric: tabular-nums;
 }
 .delete-trigger {
     position: absolute;
@@ -225,7 +322,7 @@
     line-height: 1;
 }
 
-/* --- FIX: Selected button color is now orange and stays orange on hover/focus --- */
+/* --- selected button stays orange. this took 3 attempts to get right because CSS specificity is a war crime --- */
 .choice-btn.selected,
 .choice-btn.selected:hover,
 .choice-btn.selected:focus,
@@ -234,25 +331,25 @@
     color: white;
     border-color: var(--accent-orange);
     font-weight: 700;
-    outline: none; /* Explicitly remove outline for selected items */
+    outline: none;
 }
 
-/* This removes the default blue outline on click for mouse users */
+/* no outline on click for mouse users, you don't need it */
 .choice-btn:focus {
     outline: none;
 }
 
-/* This adds a clear focus ring ONLY for keyboard users for accessibility */
+/* keyboard users get an orange ring. accessibility matters even at 2am */
 .choice-btn:focus-visible {
     outline: 2px solid var(--accent-orange);
     outline-offset: 2px;
 }
 
 .quick-phrase-grid {
-    margin-bottom: 1rem; /* Space between quick phrases and the input box */
+    margin-bottom: 1rem;
 }
 
-/* --- NEW: Red Rage Slider Styles --- */
+/* --- rage slider. red because of course it's red --- */
 .rage-slider-container {
     display: flex;
     align-items: center;
@@ -261,10 +358,10 @@
 }
 
 #rageValue {
-    font-size: 1.8rem;
+    font-size: 2rem;
     font-weight: 700;
     color: var(--error-border);
-    min-width: 2ch; /* Prevents layout shift when number changes */
+    min-width: 2ch;
     text-align: center;
 }
 
@@ -272,49 +369,50 @@ input[type="range"] {
     -webkit-appearance: none;
     appearance: none;
     width: 100%;
-    height: 8px;
-    background: #2a2a2a;
-    border-radius: 5px;
+    height: 6px;
+    background: var(--bg-surface);
+    border-radius: 3px;
     outline: none;
     cursor: pointer;
 }
 
-/* Slider Thumb (the draggable part) */
+/* the draggable circle. cross-browser styling this was a nightmare */
 input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 24px;
-    height: 24px;
+    width: 22px;
+    height: 22px;
     background: var(--error-border);
     border-radius: 50%;
-    border: 3px solid var(--container-bg);
-    box-shadow: 0 0 5px rgba(0,0,0,0.5);
-    margin-top: -8px; /* Center the thumb on the track */
-    transition: transform 0.2s ease;
+    border: 3px solid var(--card-bg);
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.3);
+    margin-top: -8px;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 input[type="range"]::-moz-range-thumb {
-    width: 24px;
-    height: 24px;
+    width: 22px;
+    height: 22px;
     background: var(--error-border);
     border-radius: 50%;
-    border: 3px solid var(--container-bg);
-    box-shadow: 0 0 5px rgba(0,0,0,0.5);
+    border: 3px solid var(--card-bg);
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.3);
 }
 
 input[type="range"]:hover::-webkit-slider-thumb {
-    transform: scale(1.1);
+    transform: scale(1.15);
+    box-shadow: 0 0 12px rgba(239, 68, 68, 0.5);
 }
 
 #session-title {
     display: flex;
     align-items: baseline;
-    gap: 1rem; /* Increased gap for status badge */
+    gap: 1rem;
     flex-wrap: wrap;
     margin-bottom: 0;
 }
 
 #session-date-container {
-    margin-bottom: 2rem; /* Add space below the date */
+    margin-bottom: 2rem;
 }
 
 #session-name-display {
@@ -322,35 +420,27 @@ input[type="range"]:hover::-webkit-slider-thumb {
 }
 
 #session-date-display {
-    font-size: 0.9rem;
-    color: var(--text-secondary);
+    font-size: 0.85rem;
+    color: var(--text-muted);
 }
 
 .status-badge {
-    font-size: 0.8rem;
-    font-weight: 700;
-    padding: 0.25rem 0.6rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.2rem 0.6rem;
     border-radius: 20px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 
 .status-badge.status-verified {
-    background-color: rgba(40, 167, 69, 0.15);
-    color: #33d45b;
+    background-color: rgba(34, 197, 94, 0.12);
+    color: #22c55e;
 }
 
 .status-badge.status-used {
-    background-color: rgba(108, 117, 125, 0.15);
-    color: #a0a0a0;
-}
-
-.session-actions {
-    justify-content: space-between; /* Align items to the edges */
-}
-
-.session-actions form {
-    margin: 0;
+    background-color: rgba(255, 255, 255, 0.05);
+    color: var(--text-muted);
 }
 
 .submit-container {
@@ -367,7 +457,7 @@ input[type="range"]:hover::-webkit-slider-thumb {
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.4rem;
     margin-top: 2rem;
     padding-top: 2rem;
     border-top: 1px solid var(--border-color);
@@ -375,33 +465,35 @@ input[type="range"]:hover::-webkit-slider-thumb {
 .pagination a, .pagination span {
     color: var(--text-secondary);
     text-decoration: none;
-    padding: 0.5rem 1rem;
+    padding: 0.45rem 0.9rem;
     border: 1px solid var(--border-color);
-    border-radius: 6px;
+    border-radius: var(--radius);
     transition: all 0.2s ease;
+    font-size: 0.875rem;
 }
 .pagination a:hover {
-    background-color: #222;
+    background-color: var(--card-bg);
     color: var(--text-color);
-    border-color: #555;
+    border-color: var(--border-hover);
 }
 .pagination .active {
     background-color: var(--accent-color);
     border-color: var(--accent-color);
     color: white;
-    font-weight: 700;
+    font-weight: 600;
 }
 .pagination .disabled {
-    color: #444;
-    border-color: #222;
+    color: var(--text-muted);
+    border-color: var(--border-color);
     cursor: not-allowed;
+    opacity: 0.5;
 }
 
-/* --- Account/Settings Page --- */
+/* --- account page. stats, phrases, achievements, danger zone --- */
 .danger-zone {
-    background-color: var(--delete-bg);
-    border: 1px solid var(--error-border);
-    border-radius: 8px;
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.04), rgba(239, 68, 68, 0.01));
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: var(--radius-lg);
     padding: 2rem;
     margin-top: 2rem;
 }
@@ -422,8 +514,8 @@ input[type="range"]:hover::-webkit-slider-thumb {
 .charts-wrapper {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 2rem;
-    margin-top: 3rem;
+    gap: 1.5rem;
+    margin-top: 2.5rem;
 }
 
 @media (min-width: 992px) {
@@ -432,51 +524,58 @@ input[type="range"]:hover::-webkit-slider-thumb {
     }
 }
 
-/* --- Admin Page --- */
+/* --- admin page. the power trip section --- */
 
 .admin-section-card {
-    background: var(--container-bg);
+    background: var(--card-bg);
     border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 2rem;
-    margin-bottom: 2rem;
+    border-radius: var(--radius-lg);
+    padding: clamp(1.5rem, 3vw, 2.5rem);
+    margin-bottom: 1.5rem;
 }
 .admin-section-card h3 {
     margin-bottom: 1.5rem;
     padding-bottom: 1rem;
     border-bottom: 1px solid var(--border-color);
+    font-size: 1.1rem;
 }
 
 .metrics-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
 }
 .metric-item {
-    background-color: #0a0a0a;
+    background-color: var(--bg-surface);
     padding: 1.25rem;
-    border-radius: 6px;
+    border-radius: var(--radius);
     border: 1px solid var(--border-color);
+    transition: border-color 0.2s ease;
+}
+.metric-item:hover {
+    border-color: var(--border-hover);
 }
 .metric-item h4 {
     margin-top: 0;
     margin-bottom: 1rem;
-    font-size: 0.9rem;
-    color: var(--text-secondary);
+    font-size: 0.8rem;
+    color: var(--text-muted);
     font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 .progress-bar {
     width: 100%;
-    height: 10px;
-    background-color: #2a2a2a;
-    border-radius: 5px;
+    height: 6px;
+    background-color: var(--bg-color);
+    border-radius: 3px;
     overflow: hidden;
     margin-bottom: 0.75rem;
 }
 .progress-bar-inner {
     height: 100%;
-    background-color: var(--accent-color);
-    border-radius: 5px;
+    background: linear-gradient(90deg, var(--accent-color), var(--accent-hover));
+    border-radius: 3px;
     transition: width 0.5s ease;
 }
 .metric-value {
@@ -486,9 +585,10 @@ input[type="range"]:hover::-webkit-slider-thumb {
 }
 .metric-value.large-text {
     font-size: 1.75rem;
-    font-weight: 600;
+    font-weight: 700;
     text-align: center;
-    padding-top: 1rem;
+    padding-top: 0.5rem;
+    letter-spacing: -0.02em;
 }
 
 .invite-management-actions {
@@ -502,7 +602,7 @@ input[type="range"]:hover::-webkit-slider-thumb {
 }
 
 .user-table .status-used {
-    color: var(--text-secondary);
+    color: var(--text-muted);
 }
 
 .user-table .status-unused {
@@ -527,28 +627,40 @@ input[type="range"]:hover::-webkit-slider-thumb {
 .user-table-container {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+    border-radius: var(--radius);
 }
 .user-table {
     width: 100%;
-    border-collapse: collapse;
-    margin-top: 2rem;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-top: 1.5rem;
     min-width: 700px;
 }
 .user-table th,
 .user-table td {
-    border: 1px solid var(--border-color);
-    padding: 12px;
+    border-bottom: 1px solid var(--border-color);
+    padding: 0.85rem 1rem;
     text-align: left;
 }
 .user-table th {
-    background-color: #1a1a1a;
+    background-color: var(--bg-surface);
     font-weight: 500;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+}
+.user-table tbody tr {
+    transition: background-color 0.15s ease;
+}
+.user-table tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.02);
 }
 .user-table .user-username {
-    font-weight: 500;
+    font-weight: 550;
 }
 .status-verified {
-    color: #28a745;
+    color: var(--success-border);
     font-weight: 500;
 }
 .status-unverified {
@@ -565,8 +677,8 @@ input[type="range"]:hover::-webkit-slider-thumb {
 }
 .action-forms .btn-secondary,
 .action-forms .delete-btn {
-    padding: 0.4rem 0.8rem;
-    font-size: 0.85rem;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.8rem;
     width: 80px;
     box-sizing: border-box;
 }
@@ -580,85 +692,102 @@ input[type="range"]:hover::-webkit-slider-thumb {
     max-width: 60ch;
 }
 
-/* --- Leaderboard Page --- */
+/* --- leaderboard. hall of shame --- */
 .leaderboard-container > p {
     color: var(--text-secondary);
     text-align: center;
-    margin-top: -1.5rem;
-    margin-bottom: 2.5rem;
+    margin-top: -1rem;
+    margin-bottom: 2rem;
+    font-size: 0.9rem;
 }
 .leaderboard-grid {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 2rem;
+    gap: 1.5rem;
+}
+.leaderboard-column {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
 }
 .leaderboard-column h3 {
     text-align: center;
     margin-bottom: 1.5rem;
     padding-bottom: 1rem;
     border-bottom: 1px solid var(--border-color);
+    font-size: 1rem;
 }
 .leaderboard-table-container {
     overflow-x: auto;
 }
 .leaderboard-table {
     width: 100%;
-    min-width: 450px;
+    min-width: 350px;
     border-collapse: collapse;
 }
 .leaderboard-table th,
 .leaderboard-table td {
-    padding: 1rem;
+    padding: 0.85rem 1rem;
     text-align: left;
     border-bottom: 1px solid var(--border-color);
 }
 .leaderboard-table th {
     font-weight: 500;
-    color: var(--text-secondary);
-    font-size: 0.9rem;
+    color: var(--text-muted);
+    font-size: 0.75rem;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.8px;
+}
+.leaderboard-table tbody tr {
+    transition: background-color 0.15s ease;
+}
+.leaderboard-table tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.02);
 }
 .leaderboard-table tbody tr:last-child td {
     border-bottom: none;
 }
 .leaderboard-table .rank-cell {
     font-weight: 700;
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     color: var(--accent-orange);
     text-align: center;
+    width: 60px;
 }
 .leaderboard-table .numeric-cell {
     text-align: right;
     font-variant-numeric: tabular-nums;
+    font-weight: 550;
 }
 @media (min-width: 768px) {
     .leaderboard-grid {
         grid-template-columns: 1fr 1fr;
     }
 }
-/* --- Account/Settings Page --- */
+
+/* --- chart containers. dark bg for contrast because charts on black look terrible --- */
 .chart-container {
-    margin-top: 3rem;
-    padding: 2rem; /* Increased padding */
-    background-color: #0a0a0a; /* Slightly different bg for contrast */
+    margin-top: 0;
+    padding: 1.5rem;
+    background-color: var(--bg-surface);
     border: 1px solid var(--border-color);
-    border-radius: 8px;
-    text-align: center; /* Center the button */
+    border-radius: var(--radius-lg);
+    text-align: center;
 }
 
 .chart-container h4 {
     margin-top: 0;
     margin-bottom: 0.5rem;
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     text-align: left;
 }
 
 .chart-container .chart-description {
-    color: var(--text-secondary);
-    font-size: 0.9rem;
+    color: var(--text-muted);
+    font-size: 0.85rem;
     margin-top: 0;
-    margin-bottom: 2rem; /* Increased margin */
+    margin-bottom: 1.5rem;
     text-align: left;
 }
 
@@ -676,48 +805,59 @@ input[type="range"]:hover::-webkit-slider-thumb {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background-color: #0a0a0a;
+    background-color: var(--bg-surface);
     padding: 0.75rem 1rem;
     border: 1px solid var(--border-color);
-    border-radius: 6px;
+    border-radius: var(--radius);
     margin-bottom: 0.5rem;
+    transition: border-color 0.15s ease;
+}
+
+.invite-code-item:hover {
+    border-color: var(--border-hover);
 }
 
 .invite-code {
     font-family: 'Courier New', Courier, monospace;
-    font-size: 1.1rem;
+    font-size: 0.95rem;
     color: var(--accent-orange);
 }
 
-/* --- NEW: Achievements --- */
+/* --- achievements. little badges of suffering --- */
 .achievements-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 0.75rem;
 }
 
 .achievement-card {
     display: flex;
     align-items: center;
     gap: 1rem;
-    background-color: #0a0a0a;
+    background-color: var(--bg-surface);
     padding: 1rem;
     border: 1px solid var(--border-color);
-    border-radius: 8px;
+    border-radius: var(--radius);
     transition: all 0.2s ease-in-out;
 }
 
 .achievement-card.unearned {
-    opacity: 0.4;
-    filter: grayscale(80%);
+    opacity: 0.3;
+    filter: grayscale(100%);
 }
 
 .achievement-card.earned {
-    border-left: 4px solid var(--accent-color);
+    border-left: 3px solid var(--accent-color);
+    background: linear-gradient(135deg, var(--bg-surface), rgba(99, 102, 241, 0.03));
+}
+
+.achievement-card.earned:hover {
+    border-color: var(--accent-color);
+    box-shadow: 0 4px 16px var(--accent-glow);
 }
 
 .achievement-icon {
-    font-size: 2.5rem;
+    font-size: 2rem;
     color: var(--accent-color);
     flex-shrink: 0;
 }
@@ -728,26 +868,26 @@ input[type="range"]:hover::-webkit-slider-thumb {
 
 .achievement-name {
     margin: 0;
-    font-size: 1rem;
+    font-size: 0.9rem;
     font-weight: 600;
 }
 
 .achievement-description {
-    margin: 0.25rem 0 0 0;
-    font-size: 0.85rem;
-    color: var(--text-secondary);
+    margin: 0.15rem 0 0 0;
+    font-size: 0.8rem;
+    color: var(--text-muted);
     line-height: 1.4;
 }
 .achievements-cell {
-    background-color: #0a0a0a;
+    background-color: var(--bg-surface);
     padding: 1rem !important;
 }
 
-/* --- Achievement Management (Admin Page) --- */
+/* --- admin achievement controls. grant and revoke with one click --- */
 .achievements-management {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem; /* Tighter gap for inline controls */
+    gap: 0.5rem;
     align-items: center;
 }
 
@@ -759,7 +899,7 @@ input[type="range"]:hover::-webkit-slider-thumb {
 }
 
 .achievements-management-form select {
-    min-width: 200px; /* Adjust width as needed */
+    min-width: 180px;
     flex-grow: 1;
 }
 
@@ -767,26 +907,33 @@ input[type="range"]:hover::-webkit-slider-thumb {
     border: 1px solid var(--border-color);
     color: white;
     cursor: pointer;
-    padding: 0.6rem 1rem; /* Match other form buttons */
-    border-radius: 6px;
-    font-size: 0.85rem;
+    padding: 0.45rem 0.85rem;
+    border-radius: var(--radius);
+    font-size: 0.8rem;
     font-weight: 500;
     transition: all 0.2s ease;
-    flex-shrink: 0; /* Prevent buttons from shrinking */
+    flex-shrink: 0;
+    font-family: inherit;
 }
 
 .btn-achievement.grantable {
     background-color: var(--success-bg);
-    border-color: var(--success-border);
+    border-color: rgba(34, 197, 94, 0.3);
 }
 .btn-achievement.grantable:hover {
-    background-color: #2a5a38;
+    background-color: rgba(34, 197, 94, 0.15);
+    box-shadow: none;
 }
 
 .btn-achievement.revokable {
     background-color: var(--delete-bg);
-    border-color: var(--error-border);
+    border-color: rgba(239, 68, 68, 0.3);
 }
 .btn-achievement.revokable:hover {
-    background-color: #6a2a2a;
+    background-color: rgba(239, 68, 68, 0.15);
+    box-shadow: none;
+}
+
+.text-secondary {
+    color: var(--text-secondary);
 }

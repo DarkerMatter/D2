@@ -1,0 +1,27 @@
+{
+  "name": "rage-tracker",
+  "main": "src/index.tsx",
+  "compatibility_date": "2024-12-18",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": "./public"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "rage-tracker-db",
+      "database_id": "YOUR_DATABASE_ID_HERE",
+      "migrations_dir": "src/db/migrations"
+    }
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "CACHE",
+      "id": "YOUR_CACHE_KV_ID_HERE"
+    },
+    {
+      "binding": "SESSIONS",
+      "id": "YOUR_SESSIONS_KV_ID_HERE"
+    }
+  ]
+}
