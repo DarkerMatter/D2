@@ -4,7 +4,8 @@ export type Env = {
     CACHE: KVNamespace
     SESSIONS: KVNamespace
     JWT_SECRET: string
-    CF_TURNSTILE_SECRET_KEY?: string
+    DISCORD_CLIENT_ID: string
+    DISCORD_CLIENT_SECRET: string
   }
   Variables: {
     user: JWTPayload | null
@@ -36,8 +37,9 @@ export type ToastNotification = {
 export type User = {
   id: number
   username: string
-  password: string
-  email: string | null
+  discord_id: string
+  discord_username: string
+  discord_avatar: string | null
   permission_level: number
   total_rage: number
   total_deaths: number
