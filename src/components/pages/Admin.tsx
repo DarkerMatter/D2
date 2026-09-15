@@ -2,7 +2,6 @@ import type { FC } from 'hono/jsx'
 
 type AdminProps = {
   users: any[]
-  invites: any[]
   achievements: any[]
   achievementsByUser: Record<number, Set<number>>
   games: any[]
@@ -17,7 +16,6 @@ type AdminProps = {
 
 export const AdminPage: FC<AdminProps> = ({
   users,
-  invites,
   achievements,
   achievementsByUser,
   games,
@@ -69,40 +67,22 @@ export const AdminPage: FC<AdminProps> = ({
         </div>
         <div class="form-group">
           <label for="gameSlug">Slug</label>
-          <input
-            id="gameSlug"
-            type="text"
-            name="slug"
-            required
-            placeholder="elden-ring-2"
-          />
+          <input id="gameSlug" type="text" name="slug" required placeholder="elden-ring-2" />
         </div>
         <div class="form-group">
           <label for="gameDesc">Snarky Description</label>
-          <input
-            id="gameDesc"
-            type="text"
-            name="description"
-            placeholder="Another reason to suffer."
-          />
+          <input id="gameDesc" type="text" name="description" placeholder="Another reason to suffer." />
         </div>
         <div class="form-group">
           <label for="gameIcon">Icon (Bootstrap)</label>
-          <input
-            id="gameIcon"
-            type="text"
-            name="icon"
-            placeholder="bi-controller"
-          />
+          <input id="gameIcon" type="text" name="icon" placeholder="bi-controller" />
         </div>
         <div class="form-group">
           <label for="gameColor">Color</label>
           <input id="gameColor" type="text" name="color" placeholder="#dc3545" />
         </div>
         <div class="form-group form-button-group">
-          <button class="btn-primary" type="submit">
-            Add Game
-          </button>
+          <button class="btn-primary" type="submit">Add Game</button>
         </div>
       </form>
 
@@ -119,9 +99,7 @@ export const AdminPage: FC<AdminProps> = ({
           <tbody>
             {games.map((game: any) => (
               <tr>
-                <td style={`color: ${game.color || 'inherit'}`}>
-                  {game.name}
-                </td>
+                <td style={`color: ${game.color || 'inherit'}`}>{game.name}</td>
                 <td style="font-family: monospace;">{game.slug}</td>
                 <td>
                   {game.is_active ? (
@@ -131,11 +109,7 @@ export const AdminPage: FC<AdminProps> = ({
                   )}
                 </td>
                 <td>
-                  <form
-                    action={`/admin/toggle-game/${game.id}`}
-                    method="post"
-                    style="margin: 0;"
-                  >
+                  <form action={`/admin/toggle-game/${game.id}`} method="post" style="margin: 0;">
                     <button class="btn-secondary" type="submit" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">
                       {game.is_active ? 'Disable' : 'Enable'}
                     </button>
@@ -148,35 +122,6 @@ export const AdminPage: FC<AdminProps> = ({
       </div>
     </div>
 
-    {/* make someone a new account so they can start suffering too */}
-    <div class="admin-section-card">
-      <h3>Create New User</h3>
-      <form action="/admin/create-user" method="post" class="user-creation-form">
-        <div class="form-group">
-          <label for="newUsername">Username</label>
-          <input id="newUsername" type="text" name="username" required />
-        </div>
-        <div class="form-group">
-          <label for="newPassword">Password</label>
-          <input id="newPassword" type="password" name="password" required />
-        </div>
-        <div class="form-group">
-          <label for="newPermLevel">Permission Level</label>
-          <select id="newPermLevel" name="permission_level" required>
-            <option value="1" selected>
-              User
-            </option>
-            <option value="5">Admin</option>
-          </select>
-        </div>
-        <div class="form-group form-button-group">
-          <button class="btn-primary" type="submit">
-            Create User
-          </button>
-        </div>
-      </form>
-    </div>
-
     {/* the god complex section. ban people, delete people, grant achievements */}
     <div class="admin-section-card">
       <h3>Manage Users</h3>
@@ -184,7 +129,8 @@ export const AdminPage: FC<AdminProps> = ({
         <table class="user-table">
           <thead>
             <tr>
-              <th>Username</th>
+              <th>User</th>
+              <th>Discord</th>
               <th>Permissions</th>
               <th>Actions</th>
               <th>Manage Achievements</th>
@@ -193,7 +139,19 @@ export const AdminPage: FC<AdminProps> = ({
           <tbody>
             {users.map((listUser: any) => (
               <tr>
-                <td class="user-username">{listUser.username}</td>
+                <td class="user-username">
+                  {listUser.discord_avatar && (
+                    <img
+                      src={`https://cdn.discordapp.com/avatars/${listUser.discord_username ? '' : ''}${listUser.discord_avatar ? `https://cdn.discordapp.com/avatars/0/${listUser.discord_avatar}.png` : ''}`}
+                      alt=""
+                      style="width: 24px; height: 24px; border-radius: 50%; vertical-align: middle; margin-right: 0.5rem;"
+                    />
+                  )}
+                  {listUser.username}
+                </td>
+                <td style="color: var(--text-muted); font-size: 0.85rem;">
+                  {listUser.discord_username ? `@${listUser.discord_username}` : '—'}
+                </td>
                 <td>
                   <form
                     action={`/admin/edit-user/${listUser.id}`}
@@ -205,15 +163,9 @@ export const AdminPage: FC<AdminProps> = ({
                       onchange="this.form.submit()"
                       disabled={listUser.id === currentUserId}
                     >
-                      <option value="0" selected={listUser.permission_level === 0}>
-                        Banned
-                      </option>
-                      <option value="1" selected={listUser.permission_level === 1}>
-                        User
-                      </option>
-                      <option value="5" selected={listUser.permission_level === 5}>
-                        Admin
-                      </option>
+                      <option value="0" selected={listUser.permission_level === 0}>Banned</option>
+                      <option value="1" selected={listUser.permission_level === 1}>User</option>
+                      <option value="5" selected={listUser.permission_level === 5}>Admin</option>
                     </select>
                   </form>
                 </td>
@@ -227,9 +179,7 @@ export const AdminPage: FC<AdminProps> = ({
                         data-confirm-title="Delete User"
                         style="margin: 0;"
                       >
-                        <button class="delete-btn" type="submit">
-                          Delete
-                        </button>
+                        <button class="delete-btn" type="submit">Delete</button>
                       </form>
                     )}
                   </div>
@@ -240,9 +190,7 @@ export const AdminPage: FC<AdminProps> = ({
                       <input type="hidden" name="userId" value={listUser.id} />
                       <select name="achievementId" required>
                         {achievements.map((ach: any) => {
-                          const hasAch =
-                            achievementsByUser[listUser.id] &&
-                            achievementsByUser[listUser.id].has(ach.id)
+                          const hasAch = achievementsByUser[listUser.id] && achievementsByUser[listUser.id].has(ach.id)
                           return (
                             <option value={ach.id}>
                               {ach.name} {hasAch ? '\u2713' : ''}
@@ -251,95 +199,14 @@ export const AdminPage: FC<AdminProps> = ({
                         })}
                       </select>
                       <div class="form-button-group">
-                        <button
-                          class="btn-achievement grantable"
-                          type="submit"
-                          formaction="/admin/grant-achievement"
-                        >
-                          Grant
-                        </button>
-                        <button
-                          class="btn-achievement revokable"
-                          type="submit"
-                          formaction="/admin/revoke-achievement"
-                        >
-                          Revoke
-                        </button>
+                        <button class="btn-achievement grantable" type="submit" formaction="/admin/grant-achievement">Grant</button>
+                        <button class="btn-achievement revokable" type="submit" formaction="/admin/revoke-achievement">Revoke</button>
                       </div>
                     </form>
                   </div>
                 </td>
               </tr>
             ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    {/* invite codes, because misery loves company */}
-    <div class="admin-section-card">
-      <h3>Invite Code Management</h3>
-      <div class="invite-management-actions">
-        <p>Generate a new invite code for a user to join.</p>
-        <form action="/admin/generate-invite" method="post">
-          <button class="btn-primary" type="submit">
-            Generate Invite Code
-          </button>
-        </form>
-      </div>
-
-      <div class="user-table-container">
-        <table class="user-table">
-          <thead>
-            <tr>
-              <th>Invite Code</th>
-              <th>Created By</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {invites.length > 0 ? (
-              invites.map((invite: any) => (
-                <tr>
-                  <td class="invite-code">{invite.code}</td>
-                  <td>{invite.creator_username}</td>
-                  <td>
-                    {invite.used_by_username ? (
-                      <span class="status-used">
-                        Used by {invite.used_by_username}
-                      </span>
-                    ) : (
-                      <span class="status-unused">Unused</span>
-                    )}
-                  </td>
-                  <td>
-                    <div class="action-forms">
-                      <form
-                        action={`/admin/delete-invite/${invite.id}`}
-                        method="post"
-                        data-confirm={`Delete invite code "${invite.code}"?`}
-                        data-confirm-title="Delete Invite Code"
-                        style="margin: 0;"
-                      >
-                        <button class="delete-btn" type="submit">
-                          Delete
-                        </button>
-                      </form>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td
-                  colSpan={4}
-                  style="text-align: center; color: var(--text-secondary);"
-                >
-                  No invite codes found.
-                </td>
-              </tr>
-            )}
           </tbody>
         </table>
       </div>
@@ -352,9 +219,7 @@ export const AdminPage: FC<AdminProps> = ({
         The leaderboard data is cached for 5 minutes. Purge to force a refresh.
       </p>
       <form action="/admin/purge-cache" method="post">
-        <button class="btn-danger" type="submit">
-          Purge Leaderboard Cache
-        </button>
+        <button class="btn-danger" type="submit">Purge Leaderboard Cache</button>
       </form>
     </div>
   </div>

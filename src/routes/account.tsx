@@ -2,8 +2,6 @@ import { Hono } from 'hono'
 import type { Env } from '../types'
 import { isAuthenticated } from '../middleware/auth'
 import { addToast, redirectWithFlash } from '../middleware/flash'
-import { hashPassword, verifyPassword } from '../services/auth'
-import { grantAchievement } from '../services/achievement'
 import { Layout } from '../components/Layout'
 import { AccountPage } from '../components/pages/Account'
 
@@ -13,7 +11,7 @@ accountRoutes.use('*', isAuthenticated)
 accountRoutes.get('/', async (c) => {
   const user = c.get('user')!
 
-  const [userRow, avgRage, topPhrase, inviteCodes, lastCode, allAchievements, userAchievements] =
+  const [userRow, avgRage, topPhrase, allAchievements, userAchievements] =
     await Promise.all([
       c.env.DB.prepare('SELECT * FROM users WHERE id = ?')
         .bind(user.userId)
@@ -28,16 +26,6 @@ accountRoutes.get('/', async (c) => {
       )
         .bind(user.userId)
         .first<{ rage_phrase: string }>(),
-      c.env.DB.prepare(
-        'SELECT code FROM invite_codes WHERE created_by_user_id = ? AND used_by_user_id IS NULL'
-      )
-        .bind(user.userId)
-        .all(),
-      c.env.DB.prepare(
-        'SELECT created_at FROM invite_codes WHERE created_by_user_id = ? ORDER BY created_at DESC LIMIT 1'
-      )
-        .bind(user.userId)
-        .first<{ created_at: string }>(),
       c.env.DB.prepare(
         'SELECT id, name, description, icon FROM achievements ORDER BY id'
       ).all(),
@@ -62,22 +50,6 @@ accountRoutes.get('/', async (c) => {
     mostCommonPhrase: topPhrase?.rage_phrase ?? 'N/A',
   }
 
-  let canGenerateCode = false
-  if (user.permissionLevel === 5) {
-    canGenerateCode = true
-  } else if (!lastCode) {
-    canGenerateCode = true
-  } else {
-    const lastDate = new Date(lastCode.created_at)
-    const now = new Date()
-    if (
-      lastDate.getFullYear() < now.getFullYear() ||
-      lastDate.getMonth() < now.getMonth()
-    ) {
-      canGenerateCode = true
-    }
-  }
-
   const earnedMap = new Map(
     (userAchievements.results as any[]).map((a: any) => [
       a.achievement_id,
@@ -94,11 +66,8 @@ accountRoutes.get('/', async (c) => {
       <AccountPage
         userData={userRow}
         stats={stats}
-        inviteCodes={inviteCodes.results as any[]}
-        canGenerateCode={canGenerateCode}
         achievements={allAchievements.results as any[]}
         earnedAchievements={earnedMap}
-        permissionLevel={user.permissionLevel}
       />
     </Layout>
   )
@@ -124,49 +93,6 @@ accountRoutes.post('/update-phrases', async (c) => {
     .run()
 
   addToast(c, { type: 'success', message: 'Your custom phrases have been saved!' })
-  return redirectWithFlash(c, '/account')
-})
-
-accountRoutes.post('/generate-invite', async (c) => {
-  const user = c.get('user')!
-
-  if (user.permissionLevel !== 5) {
-    const lastCode = await c.env.DB.prepare(
-      'SELECT created_at FROM invite_codes WHERE created_by_user_id = ? ORDER BY created_at DESC LIMIT 1'
-    )
-      .bind(user.userId)
-      .first<{ created_at: string }>()
-
-    if (lastCode) {
-      const lastDate = new Date(lastCode.created_at)
-      const now = new Date()
-      if (
-        lastDate.getFullYear() === now.getFullYear() &&
-        lastDate.getMonth() === now.getMonth()
-      ) {
-        addToast(c, {
-          type: 'error',
-          message:
-            'You already generated an invite code this month. Patience, grasshopper.',
-        })
-        return redirectWithFlash(c, '/account')
-      }
-    }
-  }
-
-  const code = crypto.randomUUID()
-  await c.env.DB.prepare(
-    'INSERT INTO invite_codes (code, created_by_user_id) VALUES (?, ?)'
-  )
-    .bind(code, user.userId)
-    .run()
-
-  await grantAchievement(c, user.userId, 6)
-
-  addToast(c, {
-    type: 'success',
-    message: 'New invite code generated! Spread the misery.',
-  })
   return redirectWithFlash(c, '/account')
 })
 
@@ -229,61 +155,11 @@ accountRoutes.get('/analytics/swear-words', async (c) => {
   return c.json(sorted)
 })
 
-accountRoutes.post('/change-password', async (c) => {
-  const user = c.get('user')!
-  const body = await c.req.parseBody<{
-    currentPassword: string
-    newPassword: string
-    confirmPassword: string
-  }>()
-
-  if (!body.currentPassword || !body.newPassword || !body.confirmPassword) {
-    addToast(c, {
-      type: 'error',
-      message: 'All password fields are required.',
-    })
-    return redirectWithFlash(c, '/account')
-  }
-  if (body.newPassword !== body.confirmPassword) {
-    addToast(c, { type: 'error', message: 'New passwords do not match.' })
-    return redirectWithFlash(c, '/account')
-  }
-  if (body.newPassword.length < 8) {
-    addToast(c, {
-      type: 'error',
-      message: 'New password must be at least 8 characters.',
-    })
-    return redirectWithFlash(c, '/account')
-  }
-
-  const userRow = await c.env.DB.prepare(
-    'SELECT password FROM users WHERE id = ?'
-  )
-    .bind(user.userId)
-    .first<{ password: string }>()
-
-  const valid = await verifyPassword(body.currentPassword, userRow!.password)
-  if (!valid) {
-    addToast(c, { type: 'error', message: 'Incorrect current password.' })
-    return redirectWithFlash(c, '/account')
-  }
-
-  const hashed = await hashPassword(body.newPassword)
-  await c.env.DB.prepare('UPDATE users SET password = ? WHERE id = ?')
-    .bind(hashed, user.userId)
-    .run()
-
-  addToast(c, { type: 'success', message: 'Password changed successfully.' })
-  return redirectWithFlash(c, '/account')
-})
-
 accountRoutes.post('/clear-data', async (c) => {
   const user = c.get('user')!
 
   await c.env.DB.batch([
-    c.env.DB.prepare('DELETE FROM sessions WHERE user_id = ?').bind(
-      user.userId
-    ),
+    c.env.DB.prepare('DELETE FROM sessions WHERE user_id = ?').bind(user.userId),
     c.env.DB.prepare(
       'UPDATE users SET total_rage = 0, total_deaths = 0 WHERE id = ?'
     ).bind(user.userId),

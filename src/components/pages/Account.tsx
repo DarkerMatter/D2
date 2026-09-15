@@ -8,21 +8,15 @@ type AccountProps = {
     averageRage: string
     mostCommonPhrase: string
   }
-  inviteCodes: any[]
-  canGenerateCode: boolean
   achievements: any[]
   earnedAchievements: Map<number, string>
-  permissionLevel: number
 }
 
 export const AccountPage: FC<AccountProps> = ({
   userData,
   stats,
-  inviteCodes,
-  canGenerateCode,
   achievements,
   earnedAchievements,
-  permissionLevel,
 }) => (
   <>
     <h2>Account Settings</h2>
@@ -144,82 +138,6 @@ export const AccountPage: FC<AccountProps> = ({
           )
         })}
       </div>
-    </div>
-
-    <div class="form-container">
-      <h3>Invite Codes</h3>
-      <p>
-        As a trusted member, you can generate invite codes for others to join.
-        Misery loves company.
-      </p>
-      {inviteCodes.length > 0 && (
-        <>
-          <p>Your available invite codes:</p>
-          <ul class="invite-code-list">
-            {inviteCodes.map((item: any) => (
-              <li class="invite-code-item">
-                <span class="invite-code">{item.code}</span>
-                <button class="btn-copy" data-code={item.code}>
-                  Copy
-                </button>
-              </li>
-            ))}
-          </ul>
-        </>
-      )}
-      {inviteCodes.length === 0 && <p>You have no available invite codes.</p>}
-
-      {canGenerateCode ? (
-        <div class="chart-actions">
-          <form action="/account/generate-invite" method="post">
-            <button class="btn btn-primary" type="submit">
-              Generate New Invite Code
-            </button>
-          </form>
-        </div>
-      ) : (
-        permissionLevel !== 5 && (
-          <p class="text-secondary">
-            You can generate a new code next month. Patience.
-          </p>
-        )
-      )}
-    </div>
-
-    <div class="form-container">
-      <form action="/account/change-password" method="post">
-        <h3>Change Password</h3>
-        <div class="form-group">
-          <label for="currentPassword">Current Password</label>
-          <input
-            id="currentPassword"
-            type="password"
-            name="currentPassword"
-            required
-          />
-        </div>
-        <div class="form-group">
-          <label for="newPassword">New Password</label>
-          <input
-            id="newPassword"
-            type="password"
-            name="newPassword"
-            required
-          />
-        </div>
-        <div class="form-group">
-          <label for="confirmPassword">Confirm New Password</label>
-          <input
-            id="confirmPassword"
-            type="password"
-            name="confirmPassword"
-            required
-          />
-        </div>
-        <button class="btn-primary" type="submit">
-          Update Password
-        </button>
-      </form>
     </div>
 
     <div class="danger-zone">
