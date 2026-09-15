@@ -211,3 +211,7 @@ dist
 
 !/.idea/
 !/Dockerfile
+
+# Wrangler
+.wrangler/
+.dev.vars

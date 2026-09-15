@@ -1,22 +1,21 @@
 {
-  "name": "d2-rage-counter",
-  "version": "1.0.0",
-  "description": "A FTS application to track Destiny 2 gaming rage.",
-  "main": "index.js",
+  "name": "rage-tracker",
+  "version": "2.0.0",
+  "private": true,
   "scripts": {
-    "start": "node index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:migrate:local": "wrangler d1 migrations apply rage-tracker-db --local",
+    "db:migrate:remote": "wrangler d1 migrations apply rage-tracker-db --remote"
   },
   "dependencies": {
-    "bcrypt": "^5.1.1",
-    "connect-flash": "^0.1.1",
-    "dotenv": "^17.2.0",
-    "express": "^4.19.2",
-    "express-session": "^1.18.0",
-    "mysql2": "^3.9.7",
-    "nodemailer": "^6.9.13",
-    "pug": "^3.0.2",
-    "systeminformation": "^5.27.7",
-    "uuid": "^9.0.1"
+    "bcryptjs": "^2.4.3",
+    "hono": "^4.7.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241224.0",
+    "@types/bcryptjs": "^2.4.6",
+    "typescript": "^5.7.0",
+    "wrangler": "^3.99.0"
   }
 }
