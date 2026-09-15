@@ -131,4 +131,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const ts = el.getAttribute('data-timestamp');
     if (ts) el.textContent = new Date(ts).toLocaleString();
   });
+
+  // --- game picker. click a game, it lights up, hidden input updates. simple. ---
+  const gamePicker = document.querySelector('.game-picker');
+  if (gamePicker) {
+    const hiddenInput = document.getElementById('selectedGameId');
+    gamePicker.querySelectorAll('.game-pick-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        gamePicker.querySelectorAll('.game-pick-btn').forEach((b) => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        hiddenInput.value = btn.dataset.gameId;
+      });
+    });
+  }
 });

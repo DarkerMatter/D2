@@ -71,16 +71,22 @@ export const Layout: FC<LayoutProps> = ({
                   </li>
                   {user.permissionLevel === 5 && (
                     <li>
-                      <a href="/admin">Admin Panel</a>
+                      <a href="/admin">Admin</a>
                     </li>
                   )}
+                  <li class="nav-separator" />
                   <li>
-                    <a href="/logout">Logout ({user.username})</a>
+                    <a href="/logout" class="nav-user">
+                      {user.username}
+                      <i class="bi bi-box-arrow-right" style="font-size: 0.8rem;" />
+                    </a>
                   </li>
                 </>
               ) : (
                 <li>
-                  <a href="/login">Login</a>
+                  <a href="/login" class="btn btn-discord" style="padding: 0.35rem 1rem; font-size: 0.8rem;">
+                    <i class="bi bi-discord" /> Login
+                  </a>
                 </li>
               )}
             </ul>
