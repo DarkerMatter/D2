@@ -17,7 +17,7 @@ export const DashboardPage: FC<DashboardProps> = ({
   <div class="dashboard-container">
     <div class="admin-section-card session-creation-form">
       <h3>Start a New Session</h3>
-      <form action="/dashboard/sessions" method="post">
+      <form action="/dashboard/sessions" method="post" id="createSessionForm">
         <div class="form-group">
           <label for="sessionName">Session Name</label>
           <input
@@ -29,12 +29,21 @@ export const DashboardPage: FC<DashboardProps> = ({
           />
         </div>
         <div class="form-group">
-          <label for="gameId">Game</label>
-          <select id="gameId" name="gameId" required>
-            {games.map((game: any) => (
-              <option value={game.id}>{game.name}</option>
+          <label>Game</label>
+          <input type="hidden" name="gameId" id="selectedGameId" value={games[0]?.id || ''} required />
+          <div class="game-picker">
+            {games.map((game: any, index: number) => (
+              <button
+                type="button"
+                class={`game-pick-btn ${index === 0 ? 'selected' : ''}`}
+                data-game-id={game.id}
+                style={`--game-color: ${game.color || 'var(--accent-color)'}`}
+              >
+                <i class={`bi ${game.icon || 'bi-controller'}`} />
+                <span>{game.name}</span>
+              </button>
             ))}
-          </select>
+          </div>
         </div>
         <div class="form-group submit-container">
           <button class="btn-primary" type="submit">
@@ -56,8 +65,9 @@ export const DashboardPage: FC<DashboardProps> = ({
           <div class="session-meta">
             {session.game_name && (
               <span
-                style={`color: ${session.game_color || 'var(--text-secondary)'}; font-size: 0.85rem; font-weight: 500;`}
+                style={`display: inline-flex; align-items: center; gap: 0.35rem; color: ${session.game_color || 'var(--text-secondary)'}; font-size: 0.85rem; font-weight: 500;`}
               >
+                <i class={`bi ${session.game_icon || 'bi-controller'}`} style="font-size: 0.9rem;" />
                 {session.game_name}
               </span>
             )}
